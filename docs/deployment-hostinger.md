@@ -113,21 +113,16 @@ Postgres is **not** published to the host. For admin access: `docker compose exe
 
 ### 3.3 Create the first admin (production)
 
-Production must not use the demo seed. Create the organization and the first super admin with a one-off command in the worker image (it contains `@prisma/client` and `bcryptjs`). Use a strong password (≥ 10 chars, letters + digits) and change it after the first login:
+Production must not use the demo seed. Create the organization and the first super admin with `scripts/create-admin.ts` (shipped in the worker image). The password is read from `ADMIN_PASSWORD` or prompted — never passed as an argument:
 
 ```bash
 read -rsp "Admin password: " ADMIN_PASSWORD; echo; export ADMIN_PASSWORD
-docker compose --env-file .env.production run --rm \
-  -e ORG_NAME="Your Agency" -e ADMIN_EMAIL="you@agency.com" -e ADMIN_NAME="Your Name" -e ADMIN_PASSWORD \
-  migrate node -e '
-const { PrismaClient } = require("@prisma/client"); const bcrypt = require("bcryptjs"); const db = new PrismaClient();
-(async () => { const e = process.env;
-  const org = await db.organization.create({ data: { name: e.ORG_NAME, slug: e.ORG_NAME.toLowerCase().replace(/[^a-z0-9]+/g, "-") } });
-  await db.user.create({ data: { organizationId: org.id, email: e.ADMIN_EMAIL.toLowerCase(), name: e.ADMIN_NAME, role: "SUPER_ADMIN", passwordHash: await bcrypt.hash(e.ADMIN_PASSWORD, 12) } });
-  await db.auditLog.create({ data: { organizationId: org.id, action: "bootstrap", entity: "Organization", entityId: org.id, summary: "First super admin created from CLI" } });
-  console.log("Organization and super admin created"); await db.$disconnect(); })();'
+docker compose --env-file .env.production run --rm -e ADMIN_PASSWORD migrate \
+  npx tsx scripts/create-admin.ts --org "Your Agency" --email you@agency.com --name "Your Name" --currency EGP --timezone Africa/Cairo
 unset ADMIN_PASSWORD
 ```
+
+Without Docker: `ADMIN_PASSWORD=… npx tsx scripts/create-admin.ts --org "Your Agency" --email you@agency.com`.
 
 (PM2 hosts: run the same `node -e …` from `/opt/mimd` with `node --env-file=.env -e …`.) Then log in, enable 2FA, set organization currency/time zone/FX in **Settings**, and invite the team from **Users & Permissions**.
 
@@ -201,7 +196,7 @@ pm2 startup systemd -u mimd --hp /opt/mimd # run the printed command as root, th
 `deploy/ecosystem.config.cjs` defines:
 
 * `mimd-web` — `.next/standalone/server.js`, fork mode, **1 instance** (in-memory rate limiter), `127.0.0.1:3000`, `--env-file=/opt/mimd/.env`, memory cap 768 MB.
-* `mimd-worker` — `tsx worker/index.ts`, `kill_timeout` 30 s so running jobs can release locks.
+* `mimd-worker` — `tsx worker/index.ts`, `kill_timeout` 65 s — on SIGTERM the worker stops claiming and finishes its batch (forced exit after 60 s).
 
 `pm2 reload` restarts gracefully; with a single fork instance there is a sub-second gap. Prefer systemd? Use `deploy/systemd/mimd-web.service` and `mimd-worker.service` instead of PM2 (don't run both).
 
@@ -249,15 +244,13 @@ Steps:
 2. Build locally: `npm ci && npm run build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/`.
 3. hPanel → **Websites → Node.js** → create app: Node 22, application root = uploaded folder, startup file `server.js` (inside `standalone`). Add env vars in the panel (same list as §1; `NODE_ENV=production`).
 4. Upload the `standalone` folder (File Manager/SFTP/Git deploy), start the app, enable SSL for the domain.
-5. hPanel → **Advanced → Cron Jobs**:
+5. hPanel → **Advanced → Cron Jobs** — one job is enough, because `tick` runs the idempotent scheduler (sync every 15 min, alerts hourly, token checks daily, due reports) and then processes due jobs for up to ~45 s:
 
 | Schedule | Command |
 |---|---|
-| `*/5 * * * *` | `curl -fsS -m 60 -X POST -H "Authorization: Bearer <CRON_SECRET>" https://dashboard.example.com/api/cron/run-jobs` |
-| `0 * * * *` | `… /api/cron/sync` |
-| `15 * * * *` | `… /api/cron/alerts` |
-| `*/15 * * * *` | `… /api/cron/reports` |
-| `30 3 * * *` | `… /api/cron/cleanup` |
+| `*/5 * * * *` | `curl -fsS -m 70 -X POST -H "Authorization: Bearer <CRON_SECRET>" https://dashboard.example.com/api/cron/tick` |
+
+   `CRON_SECRET` must be at least 16 characters (`openssl rand -hex 32`). If the backlog grows (many clients), add a second entry offset by 2 minutes, or call the typed tasks (`/api/cron/sync`, `/alerts`, `/reports`, `/tokens`) separately.
 
 6. Backups: rely on the provider's Postgres backups/PITR (Neon branches, Supabase daily backups) **plus** a weekly `pg_dump` from another machine with `scripts/backup.sh`; download uploads regularly.
 

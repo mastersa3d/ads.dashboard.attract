@@ -89,7 +89,7 @@ case "$MODE" in
 
     # Standalone output does not include static assets / public — copy them in.
     cp -r .next/static .next/standalone/.next/static
-    [[ -d public ]] && cp -r public .next/standalone/public
+    if [[ -d public ]]; then cp -r public .next/standalone/public; fi
 
     log "running migrations"
     npx prisma migrate deploy

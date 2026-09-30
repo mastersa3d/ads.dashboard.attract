@@ -45,7 +45,10 @@ const actualOf = (a: ActualTotals, m: ResultMetric) => (m === "revenue" ? a.reve
 export async function analyzePlan(plan: PlanWithLines, fx: FxTable, now = new Date()) {
   const a = readAssumptions(plan.assumptions);
   const act = await planActuals(plan, fx, now);
-  const metric = planMetric(plan.objective, plan.lines);
+  // Objective metric first; if it has no actuals yet but leads do, judge lines on leads instead.
+  let metric = planMetric(plan.objective, plan.lines);
+  const sumActual = (m: ResultMetric) => [...act.byLine.values()].reduce((s, x) => s + actualOf(x, m), 0);
+  if (act.elapsedDays > 0 && metric !== "leads" && sumActual(metric) === 0 && sumActual("leads") > 0) metric = "leads";
   const ratio = act.elapsedDays / act.totalDays;
   const total = toNum(plan.totalBudget);
 

@@ -14,8 +14,8 @@ Environment=NODE_ENV=production
 ExecStart=/usr/bin/node /opt/mimd/node_modules/tsx/dist/cli.mjs worker/index.ts
 Restart=always
 RestartSec=10
-# Give a running job time to finish and release its lock.
-TimeoutStopSec=35
+# The worker finishes its current batch on SIGTERM (forced exit after 60 s).
+TimeoutStopSec=70
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

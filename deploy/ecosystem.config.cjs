@@ -44,7 +44,7 @@ module.exports = {
       instances: 1,
       env: { NODE_ENV: "production" },
       max_memory_restart: "512M",
-      kill_timeout: 30000, // let a running job finish / release its lock
+      kill_timeout: 65000, // worker finishes its batch on SIGTERM (forced exit after 60 s)
       restart_delay: 5000,
       out_file: path.join(LOG_DIR, "worker.out.log"),
       error_file: path.join(LOG_DIR, "worker.err.log"),

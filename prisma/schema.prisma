@@ -1,7 +1,7 @@
 // Marketing Intelligence & Management Dashboard — database schema
 // Tenancy: Organization (agency / company) → Client → Brand → Account.
-// Every client-owned row carries `organizationId` AND `clientId` so queries can be
-// scoped twice (defence in depth) — see src/lib/tenant.ts.
+// Client-owned rows carry `clientId` (children reach it through their parent relation);
+// every query is scoped to the caller's accessible client ids — see src/lib/tenant.ts.
 
 generator client {
   provider = "prisma-client-js"

@@ -132,7 +132,7 @@ export default async function PlanPage({ params, searchParams }: { params: Promi
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-6">
         <KpiCard locale={locale} label={t("budget.totalBudget")} value={money(an.total)} footer={<p className="num text-[11px] text-subtle">{t("budget.mediaShare", { amount: money(an.mediaPlanned) })}</p>} />
         <KpiCard locale={locale} label={t("budget.actualSpend")} value={money(an.spentTotal)} footer={<p className="text-[11px] text-subtle">{t("budget.spendSplit", { media: money(act.media.spend), other: money(act.expensesTotal) })}</p>} />
         <KpiCard locale={locale} label={t("kpi.remaining")} value={money(an.remaining)} />

@@ -9,7 +9,7 @@
 > - **المزامنة:** تزايدية (آخر يوم مُزامَن مع إعادة سحب آخر 3 أيام)، مع إعادة المحاولة التلقائية واحترام حدود المنصات.
 > - **قيود مهمة:** واجهة X تتطلب اشتراكًا مدفوعًا؛ Google Trends لا يملك واجهة رسمية (إدخال يدوي/استيراد فقط)؛ إنفاق المنافسين لا يُعرض إلا إذا أفصحت عنه مكتبة الإعلانات الرسمية، وإلا نعرض **"مؤشر كثافة الإعلان التقديري"**.
 
-Code: `src/lib/integrations/` — `types.ts` (contracts), `providers/*.ts` (connectors), `http.ts` (resilient HTTP), `oauth-state.ts` (state + PKCE), `status.ts` (status machine + sync windows), `mapping.ts` (field mapping), `env.ts` (config readiness). Competitor ads: `src/lib/competitors/meta-ad-library.ts`. UI: `/settings/integrations`. Setup per platform: [integrations-setup.md](integrations-setup.md).
+Code: `src/lib/integrations/` — `types.ts` (contracts), `registry.ts` (connector registry), `service.ts` (persistence: tokens, accounts, sync runs), `providers/*.ts` (`meta`, `google`, `tiktok`, `linkedin`, `x`, `other`), `http.ts` (resilient HTTP), `oauth-state.ts` (state + PKCE), `status.ts` (status machine + sync windows), `mapping.ts` (field mapping), `env.ts` (config readiness). Competitor ads: `src/lib/competitors/meta-ad-library.ts`. UI: `/settings/integrations`. Setup per platform: [integrations-setup.md](integrations-setup.md).
 
 ## 1. Principles
 
@@ -131,7 +131,7 @@ stateDiagram-v2
 
 ```mermaid
 flowchart LR
-  T["Trigger<br/>schedule · Sync now · webhook · first connect"] --> J["Job sync.integration<br/>(Job table)"]
+  T["Trigger<br/>scheduler every 15 min · Sync now · webhook · first connect"] --> J["Job sync.integration<br/>(Job table)"]
   J --> W["Worker picks job<br/>(SKIP LOCKED)"]
   W --> R{"token near expiry?"}
   R -->|yes| RF["refreshToken() → re-encrypt"]
@@ -168,7 +168,7 @@ flowchart LR
 
 ### Webhooks
 
-`POST /api/webhooks/[platform]` (public prefix in `middleware.ts`) accepts change notifications where platforms offer them (e.g. Meta Page/Instagram webhooks — `GET` verification with `META_WEBHOOK_VERIFY_TOKEN`, payload signature `X-Hub-Signature-256` = HMAC-SHA256 with `META_APP_SECRET`). Handlers verify the signature, never trust the payload for data, and only enqueue an incremental `sync.integration` job for the affected account. Polling remains the source of truth.
+`/api/webhooks/meta` (public prefix `/api/webhooks` in `middleware.ts`) accepts change notifications (Meta Page/Instagram webhooks — `GET` verification with `META_WEBHOOK_VERIFY_TOKEN`, payload signature `X-Hub-Signature-256` = HMAC-SHA256 with `META_APP_SECRET`). Handlers verify the signature, never trust the payload for data, and only enqueue an incremental `sync.integration` job for the affected account. Polling remains the source of truth.
 
 ### Currency and time zones
 
@@ -189,10 +189,12 @@ Rows are stored in the **account currency** with a `currency` column; roll-ups c
 | Google Calendar (`google-calendar`) | Calendar API | `calendar.readonly` | Google client vars | Placeholder — stores connection for future publishing-date sync | No data synced yet. |
 | Google Drive (`google-drive`) | Drive API | `drive.file` | Google client vars | Placeholder — future asset import | Only files created/opened by the app are accessible. |
 | TikTok Ads (`tiktok`) | TikTok API for Business — Reporting | Chosen when the app is created (Ads Management read, Reporting); returned as ids in the token response | `TIKTOK_APP_ID`, `TIKTOK_APP_SECRET` | Advertisers; campaign × day spend, impressions, reach, clicks, conversions, payments, video plays/p100, engagements | Max 30 days per reporting request (chunked); per-app QPS/QPM limits; long-lived token without refresh (reconnect if revoked). |
-| LinkedIn Ads (`linkedin`) — planned | Marketing API (`LinkedIn-Version: LINKEDIN_API_VERSION`) | `r_ads`, `r_ads_reporting`, `r_organization_social` (organic, optional) | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | Ad accounts; campaign × day cost, impressions, clicks, leads (Lead Gen forms), conversions | Access requires approval for the **Advertising API** product; tokens 60 days, refresh 1 year (for approved apps). |
-| X Ads / X API (`x`) — planned | X API v2 (+ X Ads API) | `tweet.read`, `users.read`, `offline.access` (OAuth 2.0 PKCE) | `X_CLIENT_ID`, `X_CLIENT_SECRET` | Profile followers and post metrics; ads metrics only with X Ads API access | **Paid tier required** for meaningful read volume (Free tier is write-mostly); Ads API needs separate application. Shown as "requires paid API tier". |
-| Google Trends | **No official public API** | — | — | Manual entry or CSV import of Trends exports into `TrendSignal` (`sourceName: "Google Trends"`, `source: MANUAL/IMPORT`) | No automated pulls, by policy (no scraping). |
-| E-mail (`EMAIL`) | SMTP | — | `SMTP_*`, `MAIL_FROM` | Outbound only (reports, alerts, invitations) | — |
+| LinkedIn Ads (`linkedin`) | Marketing API (`LinkedIn-Version: LINKEDIN_API_VERSION`) | `r_ads`, `r_ads_reporting` | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | Ad accounts; campaign × day cost, impressions, clicks, leads (Lead Gen forms), conversions | Requires **Advertising API** access approved for the app; access tokens 60 days, refresh tokens for approved apps; scopes checked via token introspection. |
+| LinkedIn Pages (`linkedin-pages`) | Community Management API | `r_organization_social`, `rw_organization_admin` | same | Company page followers and share statistics | Requires **Community Management API** approval (LinkedIn requires it on a separate app). |
+| X (`x`) | X API v2, OAuth 2.0 + PKCE | `tweet.read`, `users.read`, `offline.access` | `X_CLIENT_ID`, `X_CLIENT_SECRET` | Daily followers / posts snapshot of the profile | **Paid tier (Basic or higher) required** — the Free tier cannot read account data; post-level analytics need Pro/Enterprise; X Ads API needs a separate application. |
+| Outlook Calendar (`outlook-calendar`), OneDrive (`onedrive`) | Microsoft Graph | `User.Read`, `Calendars.Read` / `Files.Read` (+ `offline_access`) | `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `MS_TENANT_ID` | Placeholders — store the connection only | No data synced yet. |
+| Google Trends (`google-trends`) | **No official public API** | — | — | Manual entry or CSV import of Trends exports into `TrendSignal` (`sourceName: "Google Trends"`, `source: MANUAL/IMPORT`) | No automated pulls, by policy (no scraping). |
+| E-mail (`email`) | SMTP | — | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | Outbound only (reports, alerts, invitations) | Configured by env vars, not OAuth. |
 
 ## 8. Competitor data policy
 
@@ -207,5 +209,5 @@ Rows are stored in the **account currency** with a `currency` column; roll-ups c
 1. Create `src/lib/integrations/providers/<name>.ts` exporting a `Connector` (no `server-only`).
 2. Declare `requiredScopes`, `envVars`, `docsUrl`, `rateLimit`, `limitations`, `mapping`.
 3. Implement `authorizeUrl`/`exchangeCode`/`refreshToken` (or `manualToken`), `testConnection`, `listAccounts`, `syncInsights` returning normalized rows; use `requestJson` with a `classify` hook.
-4. Register it in the provider registry; add env vars to `.env.example` and [integrations-setup.md](integrations-setup.md).
+4. Register it in `src/lib/integrations/registry.ts`; add env vars to `.env.example` and [integrations-setup.md](integrations-setup.md).
 5. Unit-test mapping and error classification with recorded fixtures (no live calls in CI).

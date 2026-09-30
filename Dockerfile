@@ -31,7 +31,8 @@ COPY . .
 # Build-time placeholders only; real values are injected at runtime.
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     NODE_ENV=production
-RUN npx prisma generate && npx next build
+# public/ may be absent in a fresh clone (git does not track empty dirs)
+RUN mkdir -p public && npx prisma generate && npx next build
 
 # ── app: minimal runtime ─────────────────────────────────────────────────────
 FROM base AS app
@@ -70,6 +71,7 @@ COPY --chown=nextjs:nodejs package.json package-lock.json tsconfig.json ./
 COPY --chown=nextjs:nodejs prisma ./prisma
 COPY --chown=nextjs:nodejs src ./src
 COPY --chown=nextjs:nodejs worker ./worker
+COPY --chown=nextjs:nodejs scripts ./scripts
 USER nextjs
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["npx", "tsx", "worker/index.ts"]

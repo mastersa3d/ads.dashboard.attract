@@ -38,7 +38,7 @@ flowchart TB
     LIB["Domain libs — src/lib/*<br/>queries, metrics, fx, budget, content, competitors,<br/>integrations, ai, i18n, crypto, audit"]
   end
   subgraph Worker["Worker process — worker/index.ts"]
-    JOBS["Job runner (polls Job table)<br/>sync · alerts · scheduled reports · competitor scans"]
+    JOBS["Job runner (polls Job table)<br/>sync · token checks · alerts · scheduled reports"]
   end
   DB[(PostgreSQL 16<br/>Prisma 6)]
   FS[(UPLOAD_DIR<br/>files)]
@@ -226,18 +226,19 @@ flowchart LR
 
 ## 9. Background jobs
 
-The queue is the `Job` table (no Redis). The worker (`worker/index.ts`, `npm run worker`) polls with `SELECT … FOR UPDATE SKIP LOCKED` semantics on `(status, runAt)` (indexed), sets `lockedAt`, runs the handler and records `SUCCEEDED` / `FAILED` with `lastError`. Failed jobs are retried with exponential backoff until `maxAttempts` (default 5). Stale locks (worker crash) are released after a timeout.
+The queue is the `Job` table (no Redis) — `src/lib/jobs/queue.ts`, `scheduler.ts`, `handlers.ts`. The worker (`worker/index.ts`, `npm run worker`) loops: every minute it calls the idempotent scheduler (time-bucket dedupe keys, so several workers or cron calls never double-enqueue), and every `WORKER_POLL_MS` (default 5 s) it claims up to `WORKER_BATCH` (default 5) due jobs with `FOR UPDATE SKIP LOCKED` on `(status, runAt)`, sets `lockedAt` and runs the handler. Failures re-queue with exponential backoff until `maxAttempts` (default 5), then the job is dead-lettered as `FAILED` with `lastError`. `recoverStale()` re-queues `RUNNING` jobs whose lease (15 min) expired because a worker died. On SIGTERM/SIGINT the worker stops claiming, finishes the current batch and exits (forced after 60 s). `worker/server-only-shim.ts` lets the worker reuse `server-only` libraries.
 
-| Job type | Trigger | Does |
+| Job type | Scheduled | Does |
 |---|---|---|
-| `sync.integration` | Schedule per integration (e.g. hourly for today, daily backfill) or "Sync now" | Incremental pull via connector, upsert `MetricDaily` / `OrganicMetricDaily` / campaigns, writes `SyncRun`, updates `Integration.status`. |
-| `token.refresh` | Before `tokenExpiresAt` | Refresh OAuth tokens; on failure set `EXPIRED` and notify (`TOKEN_EXPIRING`). |
-| `alerts.evaluate` | Every hour | Evaluate thresholds (`NotificationPreference.threshold`) → `Notification` rows with `dedupeKey` (spend over/under, CPL up, ROAS down, frequency, budget ending, sync stopped, content due…). |
-| `report.send` | `Report.schedule` (e.g. `weekly:mon:09:00`) | Render report, e-mail `recipients`, set `lastSentAt`. |
-| `competitor.scan` | Daily | Pull competitor ads from official ad libraries (Meta Ad Library API), update `firstSeen/lastSeen/isActive`, raise `COMPETITOR_AD` alerts. |
-| `cleanup` | Daily | Purge expired sessions, password resets, invitations, old `SyncRun` rows. |
+| `sync.integration` | Every 15 min per enabled integration in `CONNECTED` / `SYNC_FAILED` with credentials; also "Sync now", webhooks, first connect | Incremental pull via connector, upsert `MetricDaily` / `OrganicMetricDaily` / campaigns, write `SyncRun`, update `Integration.status`. |
+| `token.check` | Daily | Refresh tokens nearing expiry; mark `EXPIRED`; `TOKEN_EXPIRING` notifications (14 days ahead). |
+| `alerts.evaluate` | Hourly per organization | Evaluate thresholds (`NotificationPreference.threshold`) → `Notification` rows deduplicated by `dedupeKey` (spend over/under, CPL up, ROAS down, frequency, budget ending, sync stopped, content due…). |
+| `report.send` | Every tick for reports whose `Report.schedule` is due (e.g. `weekly:mon:09:00`) | Render report, e-mail `recipients`, set `lastSentAt`. |
+| `content.publish` | When a scheduled item is due | Marks/handles scheduled content (publishing to platforms is a later phase). |
 
-Where no long-running process is allowed (Hostinger shared / Cloud Node.js hosting), the same handlers are driven by `POST /api/cron/<task>` with `Authorization: Bearer $CRON_SECRET`, called by the hosting panel's cron (see [deployment-hostinger.md](deployment-hostinger.md)).
+Competitor ad-library scans run on demand from the competitors page (and can be scheduled the same way).
+
+Where no long-running process is allowed (Hostinger shared / Cloud Node.js hosting), the same scheduler and handlers are driven by `POST /api/cron/tick` (or `sync` / `alerts` / `reports` / `tokens`) with `Authorization: Bearer $CRON_SECRET`, processing jobs for up to ~45 s per call, called by the hosting panel's cron (see [deployment-hostinger.md](deployment-hostinger.md)).
 
 ## 10. Caching
 

@@ -45,7 +45,6 @@ In-memory sliding window per process (`src/lib/rate-limit.ts`). With one app ins
 | Export per user | 20 / min |
 | Upload per user | 30 / min |
 | AI generation per user (planned) | 10 / min |
-| Cron endpoint (planned) | 12 / min per task |
 
 Account lockout: 5 consecutive failed logins → locked 15 minutes (`User.lockedUntil`).
 
@@ -99,14 +98,14 @@ Streams a stored file after `content:view` + tenant check. Supports single byte 
 
 ### `GET /api/oauth/[platform]/start`
 
-Begins an OAuth connection. `[platform]` is the **connector id**: `meta`, `facebook`, `instagram`, `google-ads`, `ga4`, `search-console`, `youtube`, `google-calendar`, `google-drive`, `tiktok`, `linkedin`, `x`.
+Begins an OAuth connection (`src/app/api/oauth/[platform]/start/route.ts`). `[platform]` is the **connector id**: `meta`, `facebook`, `instagram`, `google-ads`, `ga4`, `search-console`, `youtube`, `google-calendar`, `google-drive`, `tiktok`, `linkedin`, `linkedin-pages`, `x`, `outlook-calendar`, `onedrive`.
 
 | | |
 |---|---|
-| Query | `clientId` (optional; org-wide when absent), `integrationId` (reconnect) |
-| Auth | Session + `integrations:manage` (SUPER_ADMIN only) + tenant |
-| Effect | Creates/updates the `Integration`, sets HttpOnly cookie `oauth_state` (HMAC-signed payload incl. PKCE verifier, 10-minute TTL), `302` to the platform's authorize URL with `state=<nonce>` and `redirect_uri=${APP_URL}/api/oauth/<id>/callback` |
-| Errors | Env vars missing → redirect back with `?error=NOT_CONFIGURED` |
+| Query | `integration=<Integration id>` — the integration row is created first from `/settings/integrations` (per client or org-wide) |
+| Auth | Session (else redirect `/login`) + `integrations:manage` (SUPER_ADMIN only); integration must belong to the user's organization and an accessible client |
+| Effect | Sets HttpOnly cookie `oauth_state` (HMAC-signed payload: nonce, org, client, integration, user, connector, PKCE verifier; 10-minute TTL) and `302` to the platform's consent screen with `state=<nonce>` and `redirect_uri=${APP_URL}/api/oauth/<id>/callback` |
+| Errors | Redirect back to `/settings/integrations?oauthError=FORBIDDEN|NOT_FOUND|UNSUPPORTED|NOT_CONFIGURED` |
 
 ### `GET /api/oauth/[platform]/callback`
 
@@ -115,11 +114,11 @@ Begins an OAuth connection. `[platform]` is the **connector id**: `meta`, `faceb
 | Query | `code`, `state` (or `error`, `error_description` from the platform) |
 | Checks | `verifyState(cookie, state)`: signature, expiry, nonce, same user and organization that started the flow; user still has `integrations:manage` |
 | Effect | Exchange code → test connection → encrypt tokens → status via `deriveStatus()` → audit `connect` → enqueue initial `sync.integration` → `302 /settings/integrations?connected=<id>` |
-| Failure | `302 /settings/integrations?error=<CODE>`; never echoes tokens or platform messages containing URLs |
+| Failure | `302 /settings/integrations?oauthError=<CODE>`; never echoes tokens or platform messages containing URLs |
 
-### `GET|POST /api/webhooks/[platform]`
+### `GET|POST /api/webhooks/meta`
 
-Public (no session). Planned for Meta first.
+Public (no session). `src/app/api/webhooks/meta/route.ts`. Other platforms will get `/api/webhooks/<platform>` routes as they are added.
 
 | | |
 |---|---|
@@ -129,28 +128,30 @@ Public (no session). Planned for Meta first.
 
 ### `GET /api/health`
 
-Public. Used by Docker `HEALTHCHECK`, Caddy `health_uri`, uptime monitors and `scripts/deploy.sh`.
+Public (`src/app/api/health/route.ts`). Used by Docker `HEALTHCHECK`, Caddy `health_uri`, uptime monitors and `scripts/deploy.sh`.
 
 ```json
-200 { "status": "ok", "db": "ok", "version": "0.1.0", "time": "2026-09-30T10:00:00.000Z" }
-503 { "status": "degraded", "db": "error" }
+200 { "status": "ok", "version": "0.1.0", "db": "ok", "latencyMs": 3, "time": "2026-09-30T10:00:00.000Z" }
+503 { "status": "degraded", "version": "0.1.0", "db": "unreachable", "latencyMs": 5002, "time": "…" }
 ```
 
-Must be cheap (`SELECT 1`), never expose configuration or secrets, `Cache-Control: no-store`.
+Runs `SELECT 1`; never exposes configuration or secrets; `Cache-Control: no-store`.
 
-### `POST /api/cron/[task]`
+### `POST|GET /api/cron/[task]`
 
-Runs background work when no worker process is available (Hostinger shared/Cloud Node.js hosting).
+Runs the scheduler and due jobs when no worker process is available (Hostinger shared/Cloud Node.js hosting). Safe alongside a worker (jobs are claimed with `SKIP LOCKED`). `src/app/api/cron/[task]/route.ts`.
 
 | | |
 |---|---|
-| Auth | `Authorization: Bearer <CRON_SECRET>` (constant-time compare). Missing/empty `CRON_SECRET` → endpoint disabled (`404`). |
-| Tasks | `run-jobs` (drain due `Job` rows for up to ~50 s), `sync` (enqueue due integration syncs), `alerts` (enqueue `alerts.evaluate`), `reports` (enqueue due scheduled reports), `cleanup` |
-| Response | `200 { "task": "run-jobs", "processed": 7, "failed": 0, "remaining": 3 }` |
+| Auth | `Authorization: Bearer <CRON_SECRET>` (or `X-Cron-Secret`), constant-time compare. The secret is never accepted in the URL (it would end up in access logs). |
+| Config | `CRON_SECRET` unset or shorter than 16 chars → `503 { "error": "CRON_SECRET not configured" }` |
+| Tasks | `tick` (schedule + run any due job), `sync` (`sync.integration`), `alerts` (`alerts.evaluate`), `reports` (`report.send`), `tokens` (`token.check`). Unknown → `404 UNKNOWN_TASK`; bad secret → `401 UNAUTHORIZED`. |
+| Budget | Claims one job at a time for up to 45 s (`maxDuration` 60 s) |
+| Response | `200 { "ok": true, "task": "tick", "scheduled": …, "processed": 7, "ms": 41234 }` |
 
 ```bash
 # Hostinger hPanel → Advanced → Cron Jobs (every 5 minutes)
-curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" https://dashboard.example.com/api/cron/run-jobs
+curl -fsS -m 70 -X POST -H "Authorization: Bearer <CRON_SECRET>" https://dashboard.example.com/api/cron/tick
 ```
 
 ### `GET /r/[token]` (page, public)

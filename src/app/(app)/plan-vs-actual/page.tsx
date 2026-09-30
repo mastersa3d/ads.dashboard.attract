@@ -167,7 +167,7 @@ export default async function PlanVsActualPage({ searchParams }: { searchParams:
         </Card>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-6">
         <KpiCard locale={locale} label={t("kpi.plannedBudget")} value={hasPlan ? money(planned.spend) : "—"} footer={<p className="text-[11px] text-subtle">{t("budget.pva.prorated")}</p>} />
         <KpiCard locale={locale} label={t("budget.pva.totalSpend")} value={money(actualSpend)} footer={<p className="text-[11px] text-subtle">{t("budget.spendSplit", { media: money(act.spend), other: money(expenseTotal) })}</p>} />
         <KpiCard

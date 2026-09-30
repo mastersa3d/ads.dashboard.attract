@@ -105,11 +105,11 @@ Full contract in [api.md](api.md).
 | `/api/export/[dataset]` | GET | Session | Per dataset (e.g. `campaigns:view`, `content:view`, `audit:view`) | CSV / Excel export of the current filtered view. Datasets: `campaigns, adsets, ads, platforms, daily, content, budget, benchmarks, competitors, competitor-ads, ideas, tasks, audit`. |
 | `/api/uploads` | POST | Session + same origin | `content:edit` + tenant | Upload an asset (≤ 25 MB; JPEG/PNG/GIF/WebP/HEIC/PDF/MP4/MOV/WebM detected by magic bytes; SVG refused) → `FileAsset`. |
 | `/api/uploads/[id]` | GET | Session | `content:view` + tenant | Stream a stored file. |
-| `/api/oauth/[platform]/start` | GET | Session | `integrations:manage` | Begin OAuth; sets signed `state` + PKCE verifier. |
+| `/api/oauth/[platform]/start` | GET | Session | `integrations:manage` | Begin OAuth for `?integration=<id>`; sets signed `state` cookie (+ PKCE verifier). |
 | `/api/oauth/[platform]/callback` | GET | `state` cookie | `integrations:manage` | Exchange code → encrypted tokens → `Integration` CONNECTED → queue first sync. |
-| `/api/webhooks/[platform]` | POST | Platform signature | — | Receive platform change notifications → queue incremental sync. |
+| `/api/webhooks/meta` | GET / POST | Verify token / `X-Hub-Signature-256` | — | Meta webhook verification and change notifications → queue incremental sync (more platforms later). |
 | `/api/health` | GET | none | — | Liveness + DB check for Docker/Caddy/uptime monitors. |
-| `/api/cron/[task]` | POST | `Bearer CRON_SECRET` | — | Run due jobs when no worker process exists (shared hosting). |
+| `/api/cron/[task]` | POST / GET | `Bearer CRON_SECRET` | — | `tick`, `sync`, `alerts`, `reports`, `tokens` — run scheduler + due jobs when no worker process exists (shared hosting). |
 | `/api/public/*` | — | varies | — | Reserved prefix for future public endpoints (excluded from the session gate in `middleware.ts`). |
 
 ## 5. Global UI elements on every authenticated page

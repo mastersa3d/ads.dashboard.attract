@@ -34,7 +34,10 @@ Consoles change their UI often; the steps below reflect the platforms at the tim
 | Google Drive (optional) | `${APP_URL}/api/oauth/google-drive/callback` |
 | TikTok Ads | `${APP_URL}/api/oauth/tiktok/callback` |
 | LinkedIn Ads | `${APP_URL}/api/oauth/linkedin/callback` |
+| LinkedIn Pages | `${APP_URL}/api/oauth/linkedin-pages/callback` |
 | X | `${APP_URL}/api/oauth/x/callback` |
+| Outlook Calendar (optional) | `${APP_URL}/api/oauth/outlook-calendar/callback` |
+| OneDrive (optional) | `${APP_URL}/api/oauth/onedrive/callback` |
 
 Add the staging equivalents (`https://staging.example.com/...`) to the same apps, or create separate staging apps (recommended for Meta/TikTok so reviews of the production app aren't affected).
 
@@ -119,8 +122,9 @@ Env: `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`, optional `LINKEDIN_API_VERS
 
 1. <https://www.linkedin.com/developers/apps> → **Create app**, associate it with your agency's **LinkedIn Company Page** (a page admin must verify the association).
 2. **Products** → request **Advertising API** (application form; approval can take several weeks). For organic page analytics, the *Community Management API* is required and LinkedIn requires it to be on a **separate app** — create a second app if you need organic data.
-3. **Auth** tab → Authorized redirect URLs: `${APP_URL}/api/oauth/linkedin/callback`. Copy Client ID/Secret.
-4. Scopes: `r_ads`, `r_ads_reporting` (and `r_organization_social` on the Community Management app).
+3. **Auth** tab → Authorized redirect URLs: `${APP_URL}/api/oauth/linkedin/callback` and `${APP_URL}/api/oauth/linkedin-pages/callback`. Copy Client ID/Secret.
+4. Scopes: `r_ads`, `r_ads_reporting` (connector `linkedin`); `r_organization_social`, `rw_organization_admin` (connector `linkedin-pages`, Community Management API).
+   Both connectors read `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET`; if LinkedIn requires two separate apps, run the Pages app under a separate deployment or ask the team to add dedicated env vars.
 5. Access tokens last 60 days; programmatic refresh tokens (1 year) are available to approved Marketing partners. The integration card warns 14 days before expiry.
 6. The connecting user needs at least *Viewer* on each Campaign Manager ad account.
 
@@ -138,6 +142,15 @@ Env: `X_CLIENT_ID`, `X_CLIENT_SECRET`. Docs: <https://developer.x.com/en/docs>
 6. **X Ads API** (paid campaign metrics) requires a separate application at <https://ads.x.com> → developer access; until approved, the X card syncs organic profile metrics only.
 
 ---
+
+## 5b. Microsoft (Outlook Calendar, OneDrive) — optional placeholders
+
+Env: `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `MS_TENANT_ID` (empty = `common`).
+
+1. <https://entra.microsoft.com> → **App registrations → New registration**; supported account types per your needs; Web redirect URIs: the two Microsoft rows in §0.
+2. **Certificates & secrets** → new client secret → `MS_CLIENT_SECRET`; **Overview** → Application (client) ID → `MS_CLIENT_ID`, Directory (tenant) ID → `MS_TENANT_ID`.
+3. **API permissions** (delegated): `User.Read`, `Calendars.Read`, `Files.Read`, `offline_access`.
+4. These connectors only store the connection today; no data is synced.
 
 ## 6. Google Trends
 

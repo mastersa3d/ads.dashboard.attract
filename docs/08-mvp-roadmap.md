@@ -23,15 +23,15 @@
 | Content | Calendar (month/week/list, recurrence, conflicts, time zones, best time), library + uploads, two-stage approvals, internal comments, versions | In progress |
 | Intelligence | Competitors (Meta Ad Library, intensity index, suggestions), trends & ideas, benchmarks | In progress |
 | Reporting | Report builder, schedules, share links `/r/[token]`, tasks, notifications/alerts | In progress |
-| Integrations | Connector framework, OAuth + PKCE + signed state, encrypted tokens, status machine, incremental sync; Meta (Ads, Pages, Instagram), Google (Ads, GA4, Search Console, YouTube), TikTok | Framework delivered; live verification per platform in Phase 2 |
+| Integrations | Connector framework, OAuth + PKCE + signed state, encrypted tokens, status machine, incremental sync; Meta (Ads, Pages, Instagram), Google (Ads, GA4, Search Console, YouTube), TikTok, LinkedIn, X, Meta webhooks | Framework + connectors delivered; live verification per platform (app reviews) in Phase 2 |
 | Ops | Worker + Postgres queue, `/api/health`, `/api/cron` fallback, backups + restore drill, structured logs | Delivered |
 | Demo | Two demo clients, 2 years of seasonal data, all badged DEMO | Delivered |
 
 ## Phase 2 — Live integrations hardening (≈ 6–8 weeks)
 
 * Pass platform reviews: Meta App Review (Advanced Access `ads_read`, `pages_read_engagement`, `instagram_manage_insights`) + Business Verification; Google Ads developer token Basic access; Google OAuth verification for sensitive scopes; TikTok app approval; LinkedIn Advertising API access.
-* LinkedIn Ads and X connectors (X behind paid-tier flag).
-* Webhooks (Meta Page/Instagram) → targeted incremental syncs.
+* Live verification of the LinkedIn (Ads, Pages) and X connectors against approved apps (X requires a paid tier).
+* Extend webhooks beyond Meta Page/Instagram; tune targeted incremental syncs.
 * Breakdown syncs (device, placement, age, gender, country) with per-client toggles to control row volume.
 * CSV/Excel import wizard (`source = IMPORT`) for platforms without API access and for Google Trends exports.
 * Sync observability: SyncRun dashboard, alert on N consecutive failures, per-platform quota usage.

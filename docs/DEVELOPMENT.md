@@ -100,3 +100,11 @@ every page must work at 360px width (tables scroll horizontally, grids collapse)
 * AI (`lib/ai/claude.ts`) receives only tenant-scoped data, never invents numbers, and its
   output is stored as PENDING `AiRecommendation` until a human accepts it.
 * No scraping. Competitor ads come from official ad-library APIs or manual entry.
+
+## Further documentation
+
+* [01 Product architecture](01-product-architecture.md) · [02 Roles & permissions](02-roles-permissions.md) · [03 Sitemap](03-sitemap.md) · [04 Database schema](04-database-schema.md)
+* [05 Integration architecture](05-integration-architecture.md) · [Integrations setup](integrations-setup.md) · [API reference](api.md)
+* [06 Wireframes](06-wireframes.md) · [07 Design system](07-design-system.md) · [08 MVP & roadmap](08-mvp-roadmap.md)
+* [Deployment on Hostinger](deployment-hostinger.md) · [Backup & restore](backup-restore.md) · [Security](security.md)
+* User guides: [Admin](user-guide-admin.md) · [Team](user-guide-team.md) · [Client](user-guide-client.md)

@@ -222,7 +222,7 @@ export function ContentBoard({
       >
         {showTime && it.publishAt && <span className="num shrink-0 text-muted">{zonedTime(new Date(it.publishAt), tz)}</span>}
         <span className="shrink-0 font-semibold text-muted">{t(`content.platformShort.${it.platform}`)}</span>
-        <span className="truncate">{it.title}</span>
+        <span dir="auto" className="min-w-0 truncate">{it.title}</span>
         {wide && <StatusBadge status={it.status} label={t(`contentStatus.${it.status}`)} className="ms-auto" />}
         {f.overdue && <AlertTriangle className="size-3 shrink-0 text-bad" aria-label={t("content.overdueApproval")} />}
         {it.seriesId && <Repeat className="size-3 shrink-0 text-subtle" aria-hidden />}
@@ -246,7 +246,7 @@ export function ContentBoard({
           dragId === it.id && "opacity-40",
         )}
       >
-        <p className="line-clamp-2 text-sm font-medium">{it.title}</p>
+        <p dir="auto" className="line-clamp-2 text-sm font-medium">{it.title}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-1 text-muted">
           <Badge tone="neutral">{t(`platform.${it.platform}`)}</Badge>
           <Badge tone="neutral">{t(`contentType.${it.type}`)}</Badge>

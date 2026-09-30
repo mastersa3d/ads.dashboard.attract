@@ -74,6 +74,12 @@ export async function planActuals(plan: PlanWithLines, fx: FxTable, now = new Da
   const q = { scope: { clientId: plan.clientId }, currency: plan.currency, fx };
   const [campaignRows, platformRows, daily] = await Promise.all([byEntity(f, q, "campaign"), byPlatform(f, q), dailySeries(f, q)]);
   out.daily = daily.map((d) => ({ date: d.date, spend: d.spend }));
+  // Pace against the last day with synced data so an unsynced "today" doesn't read as zero spend.
+  const lastData = out.daily.at(-1)?.date;
+  if (lastData && lastData < out.asOf) {
+    out.asOf = lastData;
+    out.elapsedDays = Math.min(totalDays, planDays(plan.startDate, lastData));
+  }
 
   const meta = new Map(
     (await db.campaign.findMany({ where: { clientId: plan.clientId, id: { in: campaignRows.map((c) => c.id) } }, select: { id: true, funnelStage: true } })).map((c) => [c.id, c.funnelStage]),
