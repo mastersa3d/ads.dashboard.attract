@@ -81,4 +81,4 @@ export const NAV_LABEL: Record<string, string> = {
 };
 
 /** Pages where the global performance filter bar is not relevant. */
-export const NO_FILTER_BAR = ["/settings", "/users", "/audit", "/help", "/notifications", "/onboarding", "/clients/new"];
+export const NO_FILTER_BAR = ["/settings", "/users", "/audit", "/help", "/notifications", "/onboarding", "/clients/"];

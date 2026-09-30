@@ -363,6 +363,7 @@ model User {
   tasks              Task[]         @relation("TaskAssignee")
   notifications      Notification[]
   notificationPrefs  NotificationPreference[]
+  notificationReads  NotificationRead[]
   savedViews         SavedView[]
 
   @@index([organizationId])
@@ -891,6 +892,7 @@ model Competitor {
   engagementLevel String? // LOW | MEDIUM | HIGH
   recurringMessages String[]      @default([])
   designStyle    String?
+  copyStyle      String?
   ctas           String[]         @default([])
   landingPages   String[]         @default([])
   strengths      String[]         @default([])
@@ -934,6 +936,7 @@ model CompetitorAd {
   // Only populated if the official source discloses it (e.g. EU/political ads ranges).
   officialSpendMin Decimal? @db.Decimal(14, 2)
   officialSpendMax Decimal? @db.Decimal(14, 2)
+  officialSpendCurrency String?
   source         DataSource @default(MANUAL)
   createdAt      DateTime  @default(now())
 
@@ -1042,6 +1045,7 @@ model Benchmark {
   median         Float
   p75            Float?
   higherIsBetter Boolean  @default(true)
+  currency       String? // for money metrics (CPM, CPC, CPL, CPA…); null = organization currency
   sourceName     String
   sourceUrl      String?
   sampleSize     Int?
@@ -1113,15 +1117,29 @@ model Notification {
   title          String
   body           String?
   link           String?
-  readAt         DateTime?
+  readAt         DateTime? // personal notifications (userId set)
   dedupeKey      String?
   createdAt      DateTime      @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reads        NotificationRead[]
 
   @@unique([userId, dedupeKey])
   @@index([organizationId, createdAt])
+}
+
+// Per-user read receipts for shared (org-wide / client-wide) notifications.
+model NotificationRead {
+  notificationId String
+  userId         String
+  readAt         DateTime @default(now())
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([notificationId, userId])
+  @@index([userId])
 }
 
 model NotificationPreference {

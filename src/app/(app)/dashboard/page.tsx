@@ -7,6 +7,7 @@ import { benchmarksFor } from "@/lib/queries/benchmarks";
 import { delta, forecastSpend, trendTone, type Kpis, type KpiKey } from "@/lib/metrics";
 import { fmtMoney, fmtNumber, fmtPct, fmtCompact, fmtDate, toNum } from "@/lib/format";
 import { buildExecutiveSummary } from "@/lib/ai/insights";
+import { convert } from "@/lib/fx";
 import { Badge, Callout, Card, CardBody, CardHeader, DataMeta, DemoBadge, PageHeader, Progress, LinkButton, EmptyState } from "@/components/ui/primitives";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { TimeSeriesChart, DonutChart } from "@/components/charts/charts";
@@ -57,7 +58,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     reach: lines.reduce((s, l) => s + l.plannedReach, 0) * ratio,
     impressions: lines.reduce((s, l) => s + l.plannedImpressions, 0) * ratio,
   };
-  const bm = (m: string) => benchmarks.find((b) => b.metric === m);
+  // Money benchmarks are converted from their own currency into the reporting currency.
+  const MONEY = ["CPM", "CPC", "CPL", "CPA"];
+  const bm = (m: string) => {
+    const b = benchmarks.find((x) => x.metric === m);
+    return b && MONEY.includes(m) ? { ...b, median: convert(b.median, b.currency ?? ctx.org.currency, currency, ctx.fx) } : b;
+  };
 
   const money = (n: number | null) => fmtMoney(n, currency, locale);
   const tone = (k: KpiKey) => (p ? trendTone(k, delta(c[k] as number | null, p[k] as number | null)) : "neutral");
@@ -95,7 +101,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       platforms,
       campaigns,
       followersGrowth: organic?.followersGrowth ?? null,
-      benchmarks: benchmarks.map((b) => ({ metric: b.metric, median: b.median, higherIsBetter: b.higherIsBetter })),
+      benchmarks: benchmarks.map((b) => ({ metric: b.metric, median: bm(b.metric)!.median, higherIsBetter: b.higherIsBetter })),
       currency,
       source,
     },

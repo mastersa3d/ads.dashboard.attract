@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
 import { accessibleClientIds, accessibleClients } from "@/lib/tenant";
 import { getI18n } from "@/lib/i18n/server";
+import { unreadFor } from "@/lib/notifications";
+import { notificationWhere } from "@/components/admin/notification-scope";
 import { AppShell } from "@/components/layout/app-shell";
 import { NAV, NAV_LABEL, type NavGroup } from "@/components/layout/nav";
 import type { FilterOptions } from "@/components/layout/filter-bar";
@@ -37,7 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     db.campaign.findMany({ where: scope, select: { id: true, name: true, clientId: true, country: true, branch: true, product: true, platform: true }, orderBy: { name: "asc" }, take: 500 }),
     db.adSet.findMany({ where: { campaign: scope }, select: { audience: true }, distinct: ["audience"], take: 200 }),
     db.metricDaily.findMany({ where: scope, select: { device: true, placement: true, ageRange: true, gender: true }, distinct: ["device", "placement", "ageRange", "gender"], take: 500 }),
-    db.notification.count({ where: { organizationId: user.organizationId, OR: [{ userId: user.id }, { userId: null, clientId: { in: ids } }], readAt: null } }),
+    notificationWhere(user).then((where) => db.notification.count({ where: { AND: [where, unreadFor(user.id)] } })),
     db.user.findMany({ where: { organizationId: user.organizationId, managedClients: { some: { id: { in: ids } } } }, select: { id: true, name: true } }),
     db.user.findMany({ where: { organizationId: user.organizationId, assignedContent: { some: { clientId: { in: ids } } } }, select: { id: true, name: true } }),
     db.savedView.findMany({ where: { organizationId: user.organizationId, OR: [{ userId: user.id }, { shared: true }] }, orderBy: { createdAt: "desc" }, take: 50 }),

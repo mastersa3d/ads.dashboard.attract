@@ -177,6 +177,7 @@ export function mapLibraryAd(ad: LibraryAd, competitorId: string, now = new Date
     variantCount: Math.max(1, bodies.size, titles.size),
     officialSpendMin: min,
     officialSpendMax: max, // null upper bound = open-ended range (e.g. "≥ 1M")
+    officialSpendCurrency: min != null || max != null ? (ad.currency ?? null) : null,
     source: "API",
   };
 }

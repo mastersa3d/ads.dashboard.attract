@@ -121,7 +121,7 @@ export async function createBenchmark(input: unknown): Promise<BenchmarkActionRe
   return guard(async () => {
     const user = await assertUser("benchmarks:edit");
     const data = toData(benchmarkSchema.parse(input));
-    const row = await db.benchmark.create({ data: { ...data, organizationId: user.organizationId, isManual: true } });
+    const row = await db.benchmark.create({ data: { ...data, organizationId: user.organizationId, isManual: true, currency: (await db.organization.findUniqueOrThrow({ where: { id: user.organizationId }, select: { currency: true } })).currency } });
     await audit(user, { action: "create", entity: "Benchmark", entityId: row.id, summary: `${data.metric} ${data.platform ?? ""}`.trim(), diff: data });
     revalidatePath("/benchmarks");
     return { ok: true as const, id: row.id };

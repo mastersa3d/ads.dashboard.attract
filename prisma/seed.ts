@@ -732,6 +732,7 @@ async function main() {
       median,
       p75,
       higherIsBetter: hib,
+      currency: ["CPM", "CPC", "CPL", "CPA"].includes(metric) ? "EGP" : null,
       sourceName: "Illustrative sample benchmark (demo) — replace with a verified source",
       sampleSize: null,
       periodLabel: "Trailing 12 months",
@@ -740,7 +741,7 @@ async function main() {
     })),
   });
   await db.benchmark.create({
-    data: { organizationId: org.id, metric: "CPL", platform: "META", country: "EG", industry: "Furniture & Home Decor", median: 150, p25: 90, p75: 230, higherIsBetter: false, sourceName: "Demo Agency internal portfolio (manual)", sampleSize: 14, periodLabel: "2025", asOf: daysAgo(40), isManual: true, isEstimate: false },
+    data: { organizationId: org.id, metric: "CPL", platform: "META", country: "EG", industry: "Furniture & Home Decor", median: 150, p25: 90, p75: 230, higherIsBetter: false, currency: "EGP", sourceName: "Demo Agency internal portfolio (manual)", sampleSize: 14, periodLabel: "2025", asOf: daysAgo(40), isManual: true, isEstimate: false },
   });
 
   await db.auditLog.create({ data: { organizationId: org.id, userId: admin.id, userEmail: admin.email, action: "seed", entity: "Organization", entityId: org.id, summary: "Demo workspace created" } });

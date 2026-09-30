@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertOctagon, AlertTriangle, CheckCircle2, Info, CheckCheck, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AlertSeverity, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { isRead, readIds, unreadFor } from "@/lib/notifications";
 import { pageContext } from "@/lib/page";
 import type { RawParams } from "@/lib/filters";
 import { fmtDateTime, fmtNumber } from "@/lib/format";
@@ -43,14 +44,15 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   const types = [...new Set<string>([...NOTIFICATION_TYPES, ...seen.map((x) => x.type)])];
   const type = types.find((x) => x === one(sp.type));
   const where: Prisma.NotificationWhereInput = {
-    AND: [base, ...(type ? [{ type }] : []), ...(severity ? [{ severity }] : []), ...(client ? [{ clientId: client }] : []), ...(unreadOnly ? [{ readAt: null }] : [])],
+    AND: [base, ...(type ? [{ type }] : []), ...(severity ? [{ severity }] : []), ...(client ? [{ clientId: client }] : []), ...(unreadOnly ? [unreadFor(user.id)] : [])],
   };
   const [rows, total, unread, bySeverity] = await Promise.all([
     db.notification.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
     db.notification.count({ where }),
-    db.notification.count({ where: { AND: [base, { readAt: null }] } }),
-    db.notification.groupBy({ by: ["severity"], where: { AND: [base, { readAt: null }] }, _count: true }),
+    db.notification.count({ where: { AND: [base, unreadFor(user.id)] } }),
+    db.notification.groupBy({ by: ["severity"], where: { AND: [base, unreadFor(user.id)] }, _count: true }),
   ]);
+  const sharedRead = await readIds(user.id, rows.filter((n) => !n.userId).map((n) => n.id));
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const text = (s: string | null) => (s && I18N_KEY.test(s) ? t(s) : s);
   const typeLabel = (x: string) => {
@@ -130,16 +132,17 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           <ul className="divide-y divide-border">
             {rows.map((n) => {
               const Icon = ICON[n.severity];
+              const read = isRead(n, sharedRead);
               const link = safeLink(n.link);
               return (
-                <li key={n.id} className={cx("flex gap-3 border-s-4 px-4 py-3", BAR[n.severity], n.readAt ? "opacity-75" : "bg-surface-2/40")}>
+                <li key={n.id} className={cx("flex gap-3 border-s-4 px-4 py-3", BAR[n.severity], read ? "opacity-75" : "bg-surface-2/40")}>
                   <span className={cx("mt-0.5 grid size-8 shrink-0 place-items-center rounded-full", ICON_CLS[n.severity])}>
                     <Icon className="size-4" aria-hidden />
                   </span>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      {!n.readAt && <span className="size-2 rounded-full bg-brand" aria-label={t("notifications.unread")} />}
-                      <p className={cx("text-sm", !n.readAt && "font-semibold")}>{text(n.title)}</p>
+                      {!read && <span className="size-2 rounded-full bg-brand" aria-label={t("notifications.unread")} />}
+                      <p className={cx("text-sm", !read && "font-semibold")}>{text(n.title)}</p>
                     </div>
                     {n.body && <p className="text-sm text-muted">{text(n.body)}</p>}
                     <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-subtle">
@@ -157,8 +160,8 @@ export default async function NotificationsPage({ searchParams }: { searchParams
                         {t("ui.view")}
                       </LinkButton>
                     )}
-                    <ActionButton action={markNotificationRead.bind(null, n.id, !n.readAt)} variant="ghost">
-                      {n.readAt ? t("notifications.markUnread") : t("notifications.markRead")}
+                    <ActionButton action={markNotificationRead.bind(null, n.id, !read)} variant="ghost">
+                      {read ? t("notifications.markUnread") : t("notifications.markRead")}
                     </ActionButton>
                   </div>
                 </li>

@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import type { ActionResult } from "@/components/admin/action-result";
 import { ActionError, guarded } from "@/components/admin/server-action";
 import { notificationWhere } from "@/components/admin/notification-scope";
+import { setRead, unreadFor } from "@/lib/notifications";
 
 function refresh() {
   revalidatePath("/notifications");
@@ -17,7 +18,8 @@ export async function markNotificationRead(id: string, read = true): Promise<Act
   return guarded(async () => {
     const user = await assertUser();
     const where = await notificationWhere(user);
-    const { count } = await db.notification.updateMany({ where: { AND: [where, { id }] }, data: { readAt: read ? new Date() : null } });
+    const rows = await db.notification.findMany({ where: { AND: [where, { id }] }, select: { id: true, userId: true } });
+    const count = await setRead(user.id, rows, read);
     if (!count) throw new ActionError("settings.errNotFound");
     await audit(user, { action: read ? "read" : "unread", entity: "Notification", entityId: id });
     refresh();
@@ -29,7 +31,8 @@ export async function markAllNotificationsRead(): Promise<ActionResult> {
   return guarded(async () => {
     const user = await assertUser();
     const where = await notificationWhere(user);
-    const { count } = await db.notification.updateMany({ where: { AND: [where, { readAt: null }] }, data: { readAt: new Date() } });
+    const rows = await db.notification.findMany({ where: { AND: [where, unreadFor(user.id)] }, select: { id: true, userId: true } });
+    const count = await setRead(user.id, rows, true);
     await audit(user, { action: "read_all", entity: "Notification", summary: String(count) });
     refresh();
     return { ok: "notifications.allRead" };

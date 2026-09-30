@@ -35,6 +35,7 @@ export function toAdView(a: CompetitorAd, competitor: string, now = new Date()):
     relaunched: a.relaunched,
     spendMin: a.officialSpendMin == null ? null : toNum(a.officialSpendMin),
     spendMax: a.officialSpendMax == null ? null : toNum(a.officialSpendMax),
+    spendCurrency: a.officialSpendCurrency ?? null,
     source: a.source,
     status: adStatus(a, now),
     runningDays: runningDays(a, now),

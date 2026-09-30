@@ -393,7 +393,7 @@ export async function importMetaAds(_: ActionState, fd: FormData): Promise<Actio
       if (existingId) {
         await db.competitorAd.update({
           where: { id: existingId },
-          data: { lastSeen: row.lastSeen, isActive: row.isActive, placements: row.placements, variantCount: row.variantCount, officialSpendMin: row.officialSpendMin, officialSpendMax: row.officialSpendMax, source: "API" },
+          data: { lastSeen: row.lastSeen, isActive: row.isActive, placements: row.placements, variantCount: row.variantCount, officialSpendMin: row.officialSpendMin, officialSpendMax: row.officialSpendMax, officialSpendCurrency: row.officialSpendCurrency, source: "API" },
         });
         updated++;
       } else {

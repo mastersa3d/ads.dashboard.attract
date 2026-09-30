@@ -85,7 +85,7 @@ export async function planningDefaults(opts: {
     const pick = (metric: string) => rows.find((b) => b.metric === metric && b.platform === p);
     const money = (metric: string) => {
       const b = pick(metric);
-      return b ? convert(b.median, opts.orgCurrency, opts.currency, opts.fx) : null;
+      return b ? convert(b.median, b.currency ?? opts.orgCurrency, opts.currency, opts.fx) : null;
     };
     const m = { cpm: money("CPM"), cpc: money("CPC"), cpl: money("CPL"), cvr: pick("CVR")?.median ?? null, aov: null, sourceName: pick("CPM")?.sourceName ?? pick("CPC")?.sourceName };
     market[p] = m;

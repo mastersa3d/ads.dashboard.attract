@@ -296,7 +296,7 @@ function AdCard({ a, canEdit, profileHref }: { a: AdView; canEdit: boolean; prof
           t("competitors.ads.officialSpend"),
           (a.spendMin != null || a.spendMax != null) && (
             <span className="num" title={t("competitors.ads.officialSpendHint")}>
-              {fmtNumber(a.spendMin, lc)}–{a.spendMax == null ? "∞" : fmtNumber(a.spendMax, lc)}{" "}
+              {fmtNumber(a.spendMin, lc)}–{a.spendMax == null ? "∞" : fmtNumber(a.spendMax, lc)} {a.spendCurrency ?? ""}{" "}
               <span className="text-subtle">({t("competitors.ads.officialSource")})</span>
             </span>
           ),

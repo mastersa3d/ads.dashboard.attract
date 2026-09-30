@@ -133,8 +133,9 @@ export default async function BenchmarksPage({ searchParams }: { searchParams: P
     }
   };
 
-  // Monetary benchmarks are stored in the organization's currency (see report / Settings).
+  // Monetary benchmarks carry their own currency (Benchmark.currency); older rows fall back to the organization's.
   const factor = convert(1, ctx.org.currency, currency, ctx.fx);
+  const factorFor = (b: { currency?: string | null }) => convert(1, b.currency ?? ctx.org.currency, currency, ctx.fx);
   const formatter = (m: BenchmarkMetric) => {
     const unit = METRIC_DEFS[m].unit;
     return (n: number | null) => {
@@ -167,9 +168,9 @@ export default async function BenchmarksPage({ searchParams }: { searchParams: P
     const higherIsBetter = b?.higherIsBetter ?? def.higherIsBetter;
     const bm = b
       ? {
-          p25: convertBenchmarkValue(b.p25, def.unit, factor),
-          median: convertBenchmarkValue(b.median, def.unit, factor)!,
-          p75: convertBenchmarkValue(b.p75, def.unit, factor),
+          p25: convertBenchmarkValue(b.p25, def.unit, factorFor(b)),
+          median: convertBenchmarkValue(b.median, def.unit, factorFor(b))!,
+          p75: convertBenchmarkValue(b.p75, def.unit, factorFor(b)),
           higherIsBetter,
         }
       : null;

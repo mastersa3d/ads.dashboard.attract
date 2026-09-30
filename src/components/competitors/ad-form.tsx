@@ -32,6 +32,7 @@ export type AdFormValue = {
   relaunched: boolean;
   spendMin: number | null;
   spendMax: number | null;
+  spendCurrency?: string | null;
   source: string;
 };
 

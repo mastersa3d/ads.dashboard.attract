@@ -109,7 +109,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
     const cpl = pickBenchmark(bmRows, "CPL", criteria);
     const ctr = pickBenchmark(bmRows, "CTR", criteria);
     const any = cpl ?? ctr;
-    bmByPlatform.set(p, any ? { cpl: cpl ? convert(cpl.median, ctx.org.currency, currency, ctx.fx) : null, ctr: ctr?.median ?? null, source: any.sourceName, asOf: any.asOf } : null);
+    bmByPlatform.set(p, any ? { cpl: cpl ? convert(cpl.median, cpl.currency ?? ctx.org.currency, currency, ctx.fx) : null, ctr: ctr?.median ?? null, source: any.sourceName, asOf: any.asOf } : null);
   }
   const marketFor = (p?: Platform | null) => (p ? (bmByPlatform.get(p) ?? null) : null);
   const bmUsed = [...bmByPlatform.values()].find(Boolean);
