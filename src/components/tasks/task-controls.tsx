@@ -137,7 +137,7 @@ export function TaskForm({
       <Field label={t("tasks.col.report")} htmlFor="task-report">
         <Select id="task-report" value={v.reportId} placeholder="—" onChange={(e) => set("reportId", e.target.value)} options={reports.filter((r) => r.clientId === v.clientId).map((r) => ({ value: r.id, label: r.title }))} />
       </Field>
-      <Field label={t("tasks.description")} htmlFor="task-desc" className="sm:col-span-2 lg:col-span-4">
+      <Field label={t("tasks.descriptionLabel")} htmlFor="task-desc" className="sm:col-span-2 lg:col-span-4">
         <Textarea id="task-desc" rows={3} maxLength={5000} value={v.description} onChange={(e) => set("description", e.target.value)} />
       </Field>
       <div className="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { AlertTriangle, History, Lock, MessageSquare, Paperclip, Repeat, Send, ShieldCheck, Trash2, Upload, X } from "lucide-react";
+import { History, Lock, MessageSquare, Paperclip, Repeat, Send, ShieldCheck, Trash2, Upload, X } from "lucide-react";
 import { ContentStatus, ContentType, FunnelStage, Objective } from "@prisma/client";
 import { useI18n } from "@/lib/i18n/client";
 import {

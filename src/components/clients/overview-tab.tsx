@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Client } from "@prisma/client";
 import { db } from "@/lib/db";
 import { lastMetricSync, metricSources, type PageContext } from "@/lib/page";

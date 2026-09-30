@@ -76,10 +76,11 @@ export function ContentBoard({
 
   const [optimistic, applyPatch] = useOptimistic(items, (state: ContentDTO[], p: Patch) => state.map((i) => (i.id === p.id ? { ...i, ...p } : i)));
   const [, start] = useTransition();
-  const [drawer, setDrawer] = useState<{ id?: string; defaults?: DrawerDefaults } | null>(initialOpenId ? { id: initialOpenId } : openNew ? { defaults: {} } : null);
+  const deepLinkFound = Boolean(initialOpenId && (items.some((i) => i.id === initialOpenId) || initialItem?.id === initialOpenId));
+  const [drawer, setDrawer] = useState<{ id?: string; defaults?: DrawerDefaults } | null>(deepLinkFound ? { id: initialOpenId as string } : openNew ? { defaults: {} } : null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ tone: "bad" | "warning" | "good"; text: string } | null>(null);
+  const [message, setMessage] = useState<{ tone: "bad" | "warning" | "good"; text: string } | null>(initialOpenId && !deepLinkFound ? { tone: "warning", text: t("content.err.NOT_FOUND") } : null);
   const [pendingStatus, setPendingStatus] = useState<{ item: ContentDTO; to: ContentStatus; required: boolean; label: string } | null>(null);
 
   const byId = useMemo(() => new Map(optimistic.map((i) => [i.id, i])), [optimistic]);
@@ -558,7 +559,7 @@ export function ContentBoard({
       {view === "campaign" && groupedView("campaign")}
       {view === "platform" && groupedView("platform")}
 
-      {drawer && (
+      {drawer && (!drawer.id || drawerItem) && (
         <ContentDrawer
           key={drawerItem ? `${drawerItem.id}:${drawerItem.updatedAt}` : "new"}
           item={drawerItem ?? null}

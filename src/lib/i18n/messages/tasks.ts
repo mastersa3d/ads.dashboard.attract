@@ -1,4 +1,52 @@
 // "tasks" namespace — referenced as t("tasks.<key>"). Keep en/ar keys in sync.
-const en: Record<string, string> = {};
-const ar: Record<string, string> = {};
+const en: Record<string, string> = {
+  title: "Tasks & Action Items",
+  description: "Follow-ups from reports, alerts and meetings — owner, due date and priority for every action.",
+  source: "Tasks",
+  view: "View",
+  list: "List",
+  board: "Board",
+  new: "New task",
+  edit: "Edit task",
+  create: "Create task",
+  none: "No tasks match these filters",
+  noneHint: "Create a task, or add next actions to a report.",
+  emptyColumn: "Nothing here",
+  readOnly: "You can view your client's tasks. You can update the status of tasks assigned to you.",
+  mine: "Assigned to me",
+  unassigned: "Unassigned",
+  overdue: "Overdue",
+  dueThisWeek: "Due in 7 days",
+  markDone: "Mark as done",
+  descriptionLabel: "Description",
+  confirmDelete: "Delete this task?",
+  "col.title": "Task",
+  "col.report": "Linked report",
+};
+
+const ar: Record<string, string> = {
+  title: "المهام والإجراءات",
+  description: "متابعات التقارير والتنبيهات والاجتماعات — لكل إجراء مسؤول وموعد نهائي وأولوية.",
+  source: "المهام",
+  view: "طريقة العرض",
+  list: "قائمة",
+  board: "لوحة",
+  new: "مهمة جديدة",
+  edit: "تعديل المهمة",
+  create: "إنشاء المهمة",
+  none: "لا توجد مهام تطابق هذه الفلاتر",
+  noneHint: "أنشئ مهمة، أو أضف إجراءات قادمة إلى تقرير.",
+  emptyColumn: "لا يوجد شيء هنا",
+  readOnly: "يمكنك عرض مهام عميلك، وتحديث حالة المهام المسندة إليك.",
+  mine: "المسندة إليّ",
+  unassigned: "غير مسندة",
+  overdue: "متأخرة",
+  dueThisWeek: "مستحقة خلال 7 أيام",
+  markDone: "تحديد كمنجزة",
+  descriptionLabel: "الوصف",
+  confirmDelete: "حذف هذه المهمة؟",
+  "col.title": "المهمة",
+  "col.report": "التقرير المرتبط",
+};
+
 export default { en, ar };
