@@ -112,16 +112,16 @@ describe("HTTP helper", () => {
     expect(sleep).toHaveBeenCalledWith(2000);
   });
   it("does not retry auth errors and never puts the query string in messages", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { message: "bad token" } }), { status: 401 }));
-    const err = await requestJson("https://api.example.com/x?access_token=SECRET", { fetchImpl, sleep: async () => {} }).catch((e) => e);
+    const fetchImpl = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ error: { message: "bad token" } }), { status: 401 }));
+    const err = await requestJson<never>("https://api.example.com/x?access_token=SECRET", { fetchImpl, sleep: async () => {} }).catch((e: ConnectorError) => e);
     expect(err).toBeInstanceOf(ConnectorError);
     expect(err.code).toBe("AUTH");
     expect(err.message).not.toContain("SECRET");
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
   it("retries 5xx with backoff up to the limit", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(new Response("oops", { status: 503 }));
-    const err = await requestJson("https://api.example.com/x", { fetchImpl, retries: 2, sleep: async () => {} }).catch((e) => e);
+    const fetchImpl = vi.fn().mockImplementation(async () => new Response("oops", { status: 503 }));
+    const err = await requestJson<never>("https://api.example.com/x", { fetchImpl, retries: 2, sleep: async () => {} }).catch((e: ConnectorError) => e);
     expect(err.code).toBe("API");
     expect(fetchImpl).toHaveBeenCalledTimes(3);
   });

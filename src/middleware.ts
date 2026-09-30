@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = ["/login", "/forgot-password", "/reset-password", "/invite", "/two-factor", "/r/", "/legal", "/api/health", "/api/oauth", "/api/webhooks", "/api/public"];
+const PUBLIC_PREFIXES = ["/login", "/forgot-password", "/reset-password", "/invite", "/two-factor", "/r/", "/legal", "/api/health", "/api/oauth", "/api/webhooks", "/api/public", "/api/cron"];
 const INDEXABLE = ["/login", "/legal"];
 
 /**

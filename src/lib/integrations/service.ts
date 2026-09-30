@@ -117,9 +117,14 @@ export function asConnectorError(e: unknown): ConnectorError {
 
 /** Test Connection: authenticated call + scope comparison. */
 export async function testIntegration(id: string) {
-  const i = await db.integration.findUniqueOrThrow({ where: { id } });
+  const i = await db.integration.findUniqueOrThrow({ where: { id }, include: { client: { select: { isDemo: true } } } });
   const connector = connectorOf(i);
   const run = await startRun(id, "test");
+  if (connector.authType !== "none" && !i.accessTokenEnc && i.client?.isDemo) {
+    // Demo integrations have no live credentials; keep their illustrative status untouched.
+    await finishRun(run.id, "SUCCEEDED", "Demo integration — no live credentials to test");
+    return { ok: false as const, code: "AUTH" as const, message: "Demo integration — connect a real account to test" };
+  }
   try {
     const token = connector.authType === "none" ? null : await ensureFreshToken(i);
     if (connector.authType !== "none" && !token) throw new ConnectorError("AUTH", "No credentials stored — connect first");
