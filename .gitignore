@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.env
+.env.*
+!.env.example
+*.tmp.mjs
+uploads/
+backups/
+coverage
+*.log
+next-env.d.ts
+tsconfig.tsbuildinfo

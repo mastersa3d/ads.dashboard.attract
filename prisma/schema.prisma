@@ -1,0 +1,1140 @@
+// Marketing Intelligence & Management Dashboard — database schema
+// Tenancy: Organization (agency / company) → Client → Brand → Account.
+// Every client-owned row carries `organizationId` AND `clientId` so queries can be
+// scoped twice (defence in depth) — see src/lib/tenant.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  COMPANY_MANAGER
+  MARKETING_TEAM
+  CLIENT
+  VIEWER
+}
+
+enum Platform {
+  META
+  FACEBOOK
+  INSTAGRAM
+  GOOGLE_ADS
+  TIKTOK
+  LINKEDIN
+  YOUTUBE
+  X
+  GA4
+  SEARCH_CONSOLE
+  GOOGLE_TRENDS
+  EMAIL
+  CALENDAR
+  CLOUD_STORAGE
+}
+
+enum DataSource {
+  API // pulled from an official platform API
+  MANUAL // typed in by a user
+  IMPORT // CSV / Excel import
+  ESTIMATE // computed estimate (clearly labelled in the UI)
+  DEMO // seed/demo data — always badged "Demo Data"
+}
+
+enum IntegrationStatus {
+  CONNECTED
+  DISCONNECTED
+  EXPIRED
+  PERMISSION_MISSING
+  SYNCING
+  SYNC_FAILED
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  DRAFT
+  ARCHIVED
+}
+
+enum FunnelStage {
+  AWARENESS
+  CONSIDERATION
+  CONVERSION
+  RETENTION
+  ADVOCACY
+}
+
+enum Objective {
+  AWARENESS
+  REACH
+  TRAFFIC
+  ENGAGEMENT
+  VIDEO_VIEWS
+  LEADS
+  SALES
+  APP_INSTALLS
+  MESSAGES
+}
+
+enum ContentStatus {
+  IDEA
+  BRIEF
+  IN_PRODUCTION
+  INTERNAL_REVIEW
+  CLIENT_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  NEEDS_REVISION
+  REJECTED
+}
+
+enum ContentType {
+  IMAGE
+  VIDEO
+  REEL
+  STORY
+  CAROUSEL
+  TEXT
+  ARTICLE
+  LIVE
+  SHORT
+  LEAD_FORM
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CompetitorOrigin {
+  MANUAL
+  SUGGESTED
+}
+
+enum SuggestionState {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum IdeaSource {
+  COMPETITOR
+  TREND
+  ORIGINAL
+}
+
+enum AlertSeverity {
+  SUCCESS
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+
+enum BudgetPeriod {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum BudgetScenario {
+  CONSERVATIVE
+  BALANCED
+  AGGRESSIVE
+  CUSTOM
+}
+
+enum BudgetLineCategory {
+  PLATFORM
+  OBJECTIVE
+  FUNNEL
+  PROSPECTING
+  RETARGETING
+  RETENTION
+  CAMPAIGN
+  AUDIENCE
+  PRODUCTION
+  TESTING
+  SCALING
+  CONTINGENCY
+}
+
+enum ReportType {
+  DAILY
+  WEEKLY
+  MONTHLY_CLIENT
+  EXECUTIVE
+  CAMPAIGN
+  CONTENT
+  COMPETITOR
+  BUDGET
+  ANNUAL
+}
+
+enum ApprovalDecision {
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+// ───────────────────────────── Tenancy ─────────────────────────────
+
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  country      String?
+  industry     String?
+  currency     String   @default("EGP")
+  timezone     String   @default("Africa/Cairo")
+  defaultLocale String  @default("ar")
+  logoUrl      String?
+  primaryColor String?  @default("#4f46e5")
+  customDomain String?  @unique
+  settings     Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users        User[]
+  clients      Client[]
+  invitations  Invitation[]
+  auditLogs    AuditLog[]
+  benchmarks   Benchmark[]
+  savedViews   SavedView[]
+  notifications Notification[]
+  jobs         Job[]
+}
+
+model Client {
+  id               String   @id @default(cuid())
+  organizationId   String
+  name             String
+  slug             String
+  logoUrl          String?
+  coverUrl         String?
+  brandColors      String[] @default([])
+  fonts            String[] @default([])
+  website          String?
+  industry         String?
+  country          String?
+  currency         String   @default("EGP")
+  timezone         String   @default("Africa/Cairo")
+  branches         String[] @default([])
+  contactName      String?
+  contactEmail     String?
+  contactPhone     String?
+  products         String[] @default([])
+  audiences        String[] @default([])
+  goals            String?
+  accountManagerId String?
+  contractStart    DateTime?
+  package          String?
+  notes            String?
+  isB2B            Boolean  @default(false)
+  // White label: sections hidden from CLIENT role users, report styling
+  hiddenSections   String[] @default([])
+  reportTheme      Json     @default("{}")
+  isDemo           Boolean  @default(false)
+  archived         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  accountManager User?        @relation("AccountManager", fields: [accountManagerId], references: [id], onDelete: SetNull)
+  brands         Brand[]
+  accounts       AdAccount[]
+  access         ClientAccess[]
+  campaigns      Campaign[]
+  metrics        MetricDaily[]
+  organic        OrganicMetricDaily[]
+  strategy       Strategy?
+  budgetPlans    BudgetPlan[]
+  content        ContentItem[]
+  competitors    Competitor[]
+  ideas          Idea[]
+  trends         TrendSignal[]
+  reports        Report[]
+  tasks          Task[]
+  files          FileAsset[]
+  integrations   Integration[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  logoUrl   String?
+  colors    String[] @default([])
+  createdAt DateTime @default(now())
+
+  client    Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  accounts  AdAccount[]
+  campaigns Campaign[]
+  content   ContentItem[]
+
+  @@index([clientId])
+}
+
+// A connected ad account / page / property on a platform.
+model AdAccount {
+  id            String   @id @default(cuid())
+  clientId      String
+  brandId       String?
+  integrationId String?
+  platform      Platform
+  externalId    String
+  name          String
+  currency      String   @default("EGP")
+  timezone      String   @default("Africa/Cairo")
+  country       String?
+  isOrganic     Boolean  @default(false) // page / profile rather than ad account
+  source        DataSource @default(API)
+  createdAt     DateTime @default(now())
+
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  brand       Brand?       @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  integration Integration? @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+  campaigns   Campaign[]
+  metrics     MetricDaily[]
+  organic     OrganicMetricDaily[]
+
+  @@unique([platform, externalId, clientId])
+  @@index([clientId])
+}
+
+// ───────────────────────────── Users & access ─────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String   @unique
+  name           String
+  passwordHash   String?
+  role           Role     @default(VIEWER)
+  // Fine-grained overrides on top of the role defaults, e.g. ["budget:edit", "-content:delete"]
+  permissions    String[] @default([])
+  locale         String   @default("ar")
+  avatarUrl      String?
+  active         Boolean  @default(true)
+  totpSecretEnc  String? // AES-GCM encrypted TOTP secret
+  totpEnabled    Boolean  @default(false)
+  failedLogins   Int      @default(0)
+  lockedUntil    DateTime?
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization       Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessions           Session[]
+  clientAccess       ClientAccess[]
+  managedClients     Client[]       @relation("AccountManager")
+  passwordResets     PasswordReset[]
+  assignedContent    ContentItem[]  @relation("ContentAssignee")
+  createdContent     ContentItem[]  @relation("ContentCreator")
+  comments           Comment[]
+  approvals          Approval[]
+  tasks              Task[]         @relation("TaskAssignee")
+  notifications      Notification[]
+  notificationPrefs  NotificationPreference[]
+  savedViews         SavedView[]
+
+  @@index([organizationId])
+}
+
+// Explicit client scoping. CLIENT / VIEWER users only see clients listed here.
+// MARKETING_TEAM users are scoped to listed clients when any exist, otherwise all org clients.
+model ClientAccess {
+  id       String @id @default(cuid())
+  userId   String
+  clientId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenHash    String   @unique // sha256 of the cookie token — raw token is never stored
+  userAgent    String?
+  ip           String?
+  twoFactorOk  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+  expiresAt    DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String
+  role           Role
+  clientIds      String[] @default([])
+  tokenHash      String   @unique
+  invitedById    String?
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  userEmail      String?
+  clientId       String?
+  action         String // create | update | delete | approve | reject | login | export | connect ...
+  entity         String // e.g. ContentItem
+  entityId       String?
+  summary        String?
+  diff           Json? // sanitized — never contains secrets
+  ip             String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([entity, entityId])
+}
+
+model SavedView {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  name           String
+  path           String
+  query          String // URL search params
+  shared         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+// ───────────────────────────── Integrations & tokens ─────────────────────────────
+
+model Integration {
+  id               String            @id @default(cuid())
+  organizationId   String
+  clientId         String?
+  platform         Platform
+  label            String
+  status           IntegrationStatus @default(DISCONNECTED)
+  // Secrets are AES-256-GCM encrypted (src/lib/crypto.ts). Only `tokenLast4` is ever sent to the browser.
+  accessTokenEnc   String?
+  refreshTokenEnc  String?
+  tokenLast4       String?
+  tokenExpiresAt   DateTime?
+  scopesGranted    String[]          @default([])
+  scopesRequired   String[]          @default([])
+  externalAccountId String?
+  lastSyncAt       DateTime?
+  lastSuccessAt    DateTime?
+  lastError        String?
+  syncCursor       Json? // incremental sync bookmark per endpoint
+  enabled          Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  client   Client?     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  accounts AdAccount[]
+  syncRuns SyncRun[]
+
+  @@index([organizationId])
+  @@index([clientId])
+}
+
+model SyncRun {
+  id            String   @id @default(cuid())
+  integrationId String
+  kind          String // sync | test | connect | refresh
+  status        JobStatus
+  startedAt     DateTime @default(now())
+  finishedAt    DateTime?
+  rowsUpserted  Int      @default(0)
+  message       String?
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId, startedAt])
+}
+
+// Postgres-backed background job queue (no Redis needed on Hostinger).
+model Job {
+  id             String    @id @default(cuid())
+  organizationId String?
+  type           String // sync.integration | report.send | alerts.evaluate | competitor.scan ...
+  payload        Json      @default("{}")
+  status         JobStatus @default(QUEUED)
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(5)
+  runAt          DateTime  @default(now())
+  lockedAt       DateTime?
+  lastError      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAt])
+}
+
+// ───────────────────────────── Paid media ─────────────────────────────
+
+model Campaign {
+  id           String         @id @default(cuid())
+  clientId     String
+  brandId      String?
+  accountId    String
+  externalId   String?
+  name         String
+  platform     Platform
+  objective    Objective
+  status       CampaignStatus @default(ACTIVE)
+  funnelStage  FunnelStage?
+  product      String?
+  country      String?
+  branch       String?
+  dailyBudget  Decimal?       @db.Decimal(14, 2)
+  startDate    DateTime?
+  endDate      DateTime?
+  source       DataSource     @default(API)
+  createdAt    DateTime       @default(now())
+
+  client  Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  brand   Brand?        @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  account AdAccount     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  adSets  AdSet[]
+  metrics MetricDaily[]
+
+  @@index([clientId])
+  @@index([accountId])
+}
+
+model AdSet {
+  id         String   @id @default(cuid())
+  campaignId String
+  externalId String?
+  name       String
+  audience   String?
+  status     CampaignStatus @default(ACTIVE)
+
+  campaign Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ads      Ad[]
+  metrics  MetricDaily[]
+}
+
+model Ad {
+  id          String       @id @default(cuid())
+  adSetId     String
+  externalId  String?
+  name        String
+  format      ContentType?
+  headline    String?
+  previewUrl  String?
+  status      CampaignStatus @default(ACTIVE)
+
+  adSet   AdSet         @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  metrics MetricDaily[]
+}
+
+// Daily fact table. One row per (date, ad-or-higher level, breakdown).
+model MetricDaily {
+  id           String     @id @default(cuid())
+  clientId     String
+  accountId    String
+  campaignId   String?
+  adSetId      String?
+  adId         String?
+  date         DateTime   @db.Date
+  platform     Platform
+  device       String?
+  placement    String?
+  gender       String?
+  ageRange     String?
+  country      String?
+  spend        Decimal    @default(0) @db.Decimal(14, 2)
+  impressions  Int        @default(0)
+  reach        Int        @default(0)
+  clicks       Int        @default(0)
+  leads        Int        @default(0)
+  purchases    Int        @default(0)
+  revenue      Decimal    @default(0) @db.Decimal(14, 2)
+  videoViews   Int        @default(0)
+  videoCompletions Int    @default(0)
+  engagements  Int        @default(0)
+  currency     String     @default("EGP")
+  source       DataSource @default(API)
+  syncedAt     DateTime   @default(now())
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  account  AdAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  adSet    AdSet?    @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  ad       Ad?       @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, date])
+  @@index([campaignId, date])
+  @@index([accountId, date])
+}
+
+model OrganicMetricDaily {
+  id          String     @id @default(cuid())
+  clientId    String
+  accountId   String
+  date        DateTime   @db.Date
+  platform    Platform
+  followers   Int        @default(0)
+  posts       Int        @default(0)
+  reach       Int        @default(0)
+  impressions Int        @default(0)
+  engagements Int        @default(0)
+  videoViews  Int        @default(0)
+  source      DataSource @default(API)
+
+  client  Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  account AdAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, date])
+  @@index([clientId, date])
+}
+
+// ───────────────────────────── Strategy ─────────────────────────────
+
+model Strategy {
+  id          String   @id @default(cuid())
+  clientId    String   @unique
+  // Each section is a free-form JSON document keyed by section id
+  // (overview, products, markets, goals, smartGoals, personas, painPoints, journey, funnel,
+  //  valueProp, positioning, keyMessages, pillars, tone, channels, organic, paid, remarketing,
+  //  influencer, leadGen, retention, kpis, risks, monthlyPlan, quarterlyPlan, yearlyPlan)
+  sections    Json     @default("{}")
+  status      String   @default("DRAFT") // DRAFT | IN_REVIEW | APPROVED
+  approvedById String?
+  approvedAt  DateTime?
+  version     Int      @default(1)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  client          Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  recommendations AiRecommendation[]
+}
+
+// AI output is never applied automatically — it waits here until a human accepts it.
+model AiRecommendation {
+  id          String   @id @default(cuid())
+  clientId    String
+  strategyId  String?
+  area        String // strategy.pillars | budget.reallocation | content.caption ...
+  title       String
+  body        Json
+  reasoning   String
+  confidence  Float // 0..1
+  dataSources String[] @default([])
+  state       SuggestionState @default(PENDING)
+  decidedById String?
+  decidedAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  strategy Strategy? @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, state])
+}
+
+// ───────────────────────────── Budget ─────────────────────────────
+
+model BudgetPlan {
+  id          String         @id @default(cuid())
+  clientId    String
+  name        String
+  period      BudgetPeriod
+  scenario    BudgetScenario @default(BALANCED)
+  startDate   DateTime       @db.Date
+  endDate     DateTime       @db.Date
+  totalBudget Decimal        @db.Decimal(14, 2)
+  currency    String         @default("EGP")
+  objective   Objective?
+  assumptions Json           @default("{}") // expected CPM/CPC/CPL/CVR per platform, market averages
+  status      String         @default("DRAFT") // DRAFT | APPROVED
+  approvedById String?
+  approvedAt  DateTime?
+  plannedContent Int         @default(0)
+  source      DataSource     @default(MANUAL)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  client Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  lines  BudgetLine[]
+
+  @@index([clientId])
+}
+
+model BudgetLine {
+  id              String             @id @default(cuid())
+  planId          String
+  category        BudgetLineCategory
+  label           String
+  platform        Platform?
+  campaignId      String? // link to a real campaign for plan-vs-actual
+  funnelStage     FunnelStage?
+  plannedBudget   Decimal            @db.Decimal(14, 2)
+  plannedImpressions Int             @default(0)
+  plannedReach    Int                @default(0)
+  plannedClicks   Int                @default(0)
+  plannedLeads    Int                @default(0)
+  plannedSales    Int                @default(0)
+  plannedRevenue  Decimal            @default(0) @db.Decimal(14, 2)
+  notes           String?
+
+  plan BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+}
+
+// Manually entered spend (production costs, influencer fees, offline media…)
+model Expense {
+  id          String   @id @default(cuid())
+  clientId    String
+  planLineId  String?
+  date        DateTime @db.Date
+  amount      Decimal  @db.Decimal(14, 2)
+  currency    String   @default("EGP")
+  description String
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([clientId, date])
+}
+
+// ───────────────────────────── Content ─────────────────────────────
+
+model ContentItem {
+  id              String        @id @default(cuid())
+  clientId        String
+  brandId         String?
+  campaignName    String?
+  platform        Platform
+  title           String
+  publishAt       DateTime?
+  timezone        String        @default("Africa/Cairo")
+  type            ContentType
+  pillar          String?
+  funnelStage     FunnelStage?
+  objective       Objective?
+  audience        String?
+  caption         String?
+  hook            String?
+  cta             String?
+  hashtags        String[]      @default([])
+  keywords        String[]      @default([])
+  designBrief     String?
+  designUrl       String?
+  videoUrl        String?
+  assetUrls       String[]      @default([])
+  assigneeId      String?
+  createdById     String?
+  status          ContentStatus @default(IDEA)
+  notes           String?
+  publishedUrl    String?
+  isPaid          Boolean       @default(false)
+  boostBudget     Decimal?      @db.Decimal(14, 2)
+  approvalDeadline DateTime?
+  recurrence      String? // RRULE-like: FREQ=WEEKLY;COUNT=4
+  seriesId        String?
+  ideaId          String?
+  version         Int           @default(1)
+  // post-publish organic results (optional)
+  resultReach       Int?
+  resultEngagements Int?
+  source          DataSource    @default(MANUAL)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  client    Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  brand     Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  assignee  User?      @relation("ContentAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy User?      @relation("ContentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  comments  Comment[]
+  approvals Approval[]
+  versions  ContentVersion[]
+
+  @@index([clientId, publishAt])
+  @@index([clientId, status])
+}
+
+model ContentVersion {
+  id        String   @id @default(cuid())
+  contentId String
+  version   Int
+  snapshot  Json
+  editedById String?
+  createdAt DateTime @default(now())
+
+  content ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  contentId String
+  userId    String
+  body      String
+  internal  Boolean  @default(false) // hidden from CLIENT users
+  createdAt DateTime @default(now())
+
+  content ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+}
+
+model Approval {
+  id        String           @id @default(cuid())
+  contentId String
+  userId    String
+  stage     String // INTERNAL | CLIENT
+  decision  ApprovalDecision
+  comment   String?
+  createdAt DateTime         @default(now())
+
+  content ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+}
+
+model FileAsset {
+  id          String   @id @default(cuid())
+  clientId    String
+  name        String
+  url         String
+  mimeType    String
+  sizeBytes   Int
+  uploadedById String?
+  tags        String[] @default([])
+  createdAt   DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ───────────────────────────── Competitors ─────────────────────────────
+
+model Competitor {
+  id             String           @id @default(cuid())
+  clientId       String
+  name           String
+  logoUrl        String?
+  website        String?
+  socialLinks    Json             @default("{}") // { facebook: url, instagram: url, ... }
+  activePlatforms Platform[]      @default([])
+  origin         CompetitorOrigin @default(MANUAL)
+  state          SuggestionState  @default(ACCEPTED)
+  suggestionReason String?
+  // qualitative analysis (manual or AI-assisted, always editable)
+  followers      Json             @default("{}") // { instagram: { count, growthPct, asOf, source } }
+  postingPerWeek Float?
+  contentTypes   String[]         @default([])
+  pillars        String[]         @default([])
+  engagementLevel String? // LOW | MEDIUM | HIGH
+  recurringMessages String[]      @default([])
+  designStyle    String?
+  ctas           String[]         @default([])
+  landingPages   String[]         @default([])
+  strengths      String[]         @default([])
+  weaknesses     String[]         @default([])
+  opportunities  String[]         @default([])
+  notes          String?
+  source         DataSource       @default(MANUAL)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  client Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  ads    CompetitorAd[]
+  posts  CompetitorPost[]
+
+  @@index([clientId])
+}
+
+// Ads observed through official public ad libraries (e.g. Meta Ad Library API).
+model CompetitorAd {
+  id             String    @id @default(cuid())
+  competitorId   String
+  platform       Platform
+  libraryId      String? // id in the public ad library
+  libraryUrl     String?
+  firstSeen      DateTime  @db.Date
+  lastSeen       DateTime  @db.Date
+  isActive       Boolean   @default(true)
+  placements     String[]  @default([])
+  format         ContentType?
+  creativeIdea   String?
+  hook           String?
+  offer          String?
+  message        String?
+  cta            String?
+  product        String?
+  audienceGuess  String?
+  funnelGuess    FunnelStage?
+  landingPage    String?
+  variantCount   Int       @default(1)
+  relaunched     Boolean   @default(false)
+  // Only populated if the official source discloses it (e.g. EU/political ads ranges).
+  officialSpendMin Decimal? @db.Decimal(14, 2)
+  officialSpendMax Decimal? @db.Decimal(14, 2)
+  source         DataSource @default(MANUAL)
+  createdAt      DateTime  @default(now())
+
+  competitor Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  @@index([competitorId, firstSeen])
+}
+
+model CompetitorPost {
+  id           String   @id @default(cuid())
+  competitorId String
+  platform     Platform
+  url          String?
+  postedAt     DateTime
+  type         ContentType?
+  topic        String?
+  occasion     String? // Ramadan, Eid, Black Friday…
+  engagements  Int?
+  isTopPost    Boolean  @default(false)
+  source       DataSource @default(MANUAL)
+
+  competitor Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  @@index([competitorId, postedAt])
+}
+
+// ───────────────────────────── Ideas & trends ─────────────────────────────
+
+model TrendSignal {
+  id           String   @id @default(cuid())
+  clientId     String
+  keyword      String
+  kind         String // SEARCH | RISING | QUESTION | TOPIC | INTEREST | SOCIAL | HOOK | FORMAT
+  sourceName   String // "Google Trends", "Search Console", "Manual"…
+  sourceUrl    String?
+  growthPct    Float?
+  volumeIndex  Int?
+  discoveredAt DateTime @default(now())
+  expiresAt    DateTime?
+  source       DataSource @default(MANUAL)
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, discoveredAt])
+}
+
+model Idea {
+  id            String     @id @default(cuid())
+  clientId      String
+  source        IdeaSource
+  title         String
+  reason        String?
+  // competitor-derived
+  competitorName String?
+  originalIdea  String?
+  whyItWorked   String?
+  ourTwist      String?
+  // trend-derived
+  signalSource  String?
+  signalGrowth  Float?
+  validUntil    DateTime?
+  keyword       String?
+  searchIntent  String?
+  // shared
+  platform      Platform?
+  format        ContentType?
+  audience      String?
+  objective     Objective?
+  funnelStage   FunnelStage?
+  hook          String?
+  cta           String?
+  captionOutline String?
+  visualDirection String?
+  priority      Priority   @default(MEDIUM)
+  ease          Int        @default(3) // 1..5
+  impact        Int        @default(3) // 1..5
+  costEstimate  String?
+  successMetrics String[]  @default([])
+  isSeasonal    Boolean    @default(false)
+  isEvergreen   Boolean    @default(false)
+  addedToCalendar Boolean  @default(false)
+  aiGenerated   Boolean    @default(false)
+  dataSource    DataSource @default(MANUAL)
+  createdAt     DateTime   @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, source])
+}
+
+// ───────────────────────────── Benchmarks ─────────────────────────────
+
+model Benchmark {
+  id             String   @id @default(cuid())
+  organizationId String? // null = global/system benchmark
+  metric         String // CPM | CPC | CTR | CPL | CPA | CPP | CVR | ROAS | ER | VCR | FREQ | REACH_EFF | FOLLOWER_GROWTH
+  platform       Platform?
+  country        String?
+  industry       String?
+  businessSize   String?
+  productType    String?
+  isB2B          Boolean?
+  objective      Objective?
+  audienceType   String?
+  p25            Float?
+  median         Float
+  p75            Float?
+  higherIsBetter Boolean  @default(true)
+  sourceName     String
+  sourceUrl      String?
+  sampleSize     Int?
+  periodLabel    String?
+  asOf           DateTime
+  isManual       Boolean  @default(false)
+  isEstimate     Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([metric, platform])
+}
+
+// ───────────────────────────── Reports, tasks, notifications ─────────────────────────────
+
+model Report {
+  id           String     @id @default(cuid())
+  clientId     String
+  type         ReportType
+  title        String
+  periodStart  DateTime   @db.Date
+  periodEnd    DateTime   @db.Date
+  config       Json       @default("{}") // platforms, kpis, charts, compare, theme
+  summary      Json       @default("{}") // executive summary, wins, challenges, learnings
+  shareTokenHash String?  @unique
+  shareExpiresAt DateTime?
+  schedule     String? // cron-like: "weekly:mon:09:00"
+  recipients   String[]   @default([])
+  lastSentAt   DateTime?
+  createdById  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  actions Task[]
+
+  @@index([clientId])
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  clientId    String
+  reportId    String?
+  title       String
+  description String?
+  assigneeId  String?
+  dueDate     DateTime?
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+  createdById String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  report   Report? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([clientId, status])
+}
+
+model Notification {
+  id             String        @id @default(cuid())
+  organizationId String
+  userId         String?
+  clientId       String?
+  type           String // SPEND_OVER | SPEND_UNDER | CPL_UP | ROAS_DOWN | FREQUENCY | BUDGET_ENDING | SYNC_STOPPED | TOKEN_EXPIRING | PERMISSION_MISSING | CONTENT_DUE | CONTENT_REJECTED | COMPETITOR_AD | TREND | REALLOCATION
+  severity       AlertSeverity @default(INFO)
+  title          String
+  body           String?
+  link           String?
+  readAt         DateTime?
+  dedupeKey      String?
+  createdAt      DateTime      @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([organizationId, createdAt])
+}
+
+model NotificationPreference {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  clientId  String?
+  platform  Platform?
+  inApp     Boolean   @default(true)
+  email     Boolean   @default(false)
+  threshold Float? // e.g. alert when spend variance > 15%
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, clientId])
+}

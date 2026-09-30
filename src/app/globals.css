@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+/* Dark mode is class-based so the user's choice (cookie) wins over the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ───────── Design tokens (see docs/07-design-system.md) ───────── */
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f1f3f9;
+  --border: #e3e6ef;
+  --text: #0f172a;
+  --muted: #5b6477;
+  --subtle: #8a93a6;
+
+  /* brand — overridden per client via inline style (white label) */
+  --brand: #4f46e5;
+  --brand-fg: #ffffff;
+  --brand-soft: color-mix(in oklab, var(--brand) 12%, transparent);
+
+  /* status: green good, red needs action, orange warning, blue info */
+  --good: #16a34a;
+  --good-soft: #dcfce7;
+  --bad: #dc2626;
+  --bad-soft: #fee2e2;
+  --warn: #ea8a0c;
+  --warn-soft: #ffedd5;
+  --info: #2563eb;
+  --info-soft: #dbeafe;
+  --demo: #a21caf;
+  --demo-soft: #fae8ff;
+
+  /* categorical chart palette — validated for CVD separation (dataviz validator), fixed order */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #4a3aa7;
+  --chart-7: #8a93a6;
+
+  --radius: 0.75rem;
+  --shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+}
+
+.dark {
+  --bg: #0b1020;
+  --surface: #121a2e;
+  --surface-2: #19233b;
+  --border: #26324d;
+  --text: #e6eaf3;
+  --muted: #a0aac0;
+  --subtle: #6f7a93;
+  --brand: #818cf8;
+  --brand-fg: #0b1020;
+  --good: #22c55e;
+  --good-soft: rgb(34 197 94 / 0.15);
+  --bad: #f87171;
+  --bad-soft: rgb(248 113 113 / 0.15);
+  --warn: #fb923c;
+  --warn-soft: rgb(251 146 60 / 0.15);
+  --info: #60a5fa;
+  --info-soft: rgb(96 165 250 / 0.15);
+  --demo: #e879f9;
+  --demo-soft: rgb(232 121 249 / 0.15);
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #9085e9;
+  --chart-7: #6f7a93;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-demo: var(--demo);
+  --color-demo-soft: var(--demo-soft);
+  --radius-card: var(--radius);
+  --shadow-card: var(--shadow);
+  --font-sans: var(--font-inter), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+}
+
+html[dir="rtl"] {
+  --font-sans: var(--font-arabic), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers stay LTR inside RTL text so "+12.5%" doesn't flip. */
+.num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Directional icons (chevrons/arrows) mirror in RTL. */
+html[dir="rtl"] .flip-rtl {
+  transform: scaleX(-1);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: skeleton 1.4s ease infinite;
+  border-radius: 0.5rem;
+}
+@keyframes skeleton {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+/* Print = PDF export. Hide chrome, keep cards unbroken. */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .print-break { break-before: page; }
+  .card { break-inside: avoid; box-shadow: none; }
+  main { padding: 0 !important; }
+}
