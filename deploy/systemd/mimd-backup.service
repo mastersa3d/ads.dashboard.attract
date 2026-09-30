@@ -1,0 +1,14 @@
+# Runs scripts/backup.sh once. Triggered daily by mimd-backup.timer.
+[Unit]
+Description=Marketing Intelligence Dashboard — database + uploads backup
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=mimd
+Group=mimd
+WorkingDirectory=/opt/mimd
+EnvironmentFile=/opt/mimd/.env
+ExecStart=/opt/mimd/scripts/backup.sh
+Nice=10
+IOSchedulingClass=idle

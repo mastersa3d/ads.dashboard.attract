@@ -1,0 +1,29 @@
+# systemd alternative to PM2 for the background job worker (sync, alerts, scheduled reports).
+[Unit]
+Description=Marketing Intelligence Dashboard — job worker
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mimd
+Group=mimd
+WorkingDirectory=/opt/mimd
+EnvironmentFile=/opt/mimd/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /opt/mimd/node_modules/tsx/dist/cli.mjs worker/index.ts
+Restart=always
+RestartSec=10
+# Give a running job time to finish and release its lock.
+TimeoutStopSec=35
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/mimd/uploads
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mimd-worker
+
+[Install]
+WantedBy=multi-user.target

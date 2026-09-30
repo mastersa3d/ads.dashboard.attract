@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Staging override. Runs as a separate Compose project with its own volumes, so staging and
+# production can live on the same VPS (use different DOMAIN values and do NOT publish
+# ports 80/443 twice — see docs/deployment-hostinger.md §Staging for the shared-Caddy setup).
+#
+#   docker compose -p mimd-staging -f docker-compose.yml -f docker-compose.staging.yml \
+#     --env-file .env.staging up -d --build
+#   docker compose -p mimd-staging -f docker-compose.yml -f docker-compose.staging.yml \
+#     --env-file .env.staging --profile demo run --rm seed      # demo data: staging only
+# ─────────────────────────────────────────────────────────────────────────────
+name: mimd-staging
+
+services:
+  app:
+    image: mimd-app:${IMAGE_TAG:-staging}
+    environment:
+      LOG_LEVEL: debug
+      # Staging must never send real client e-mail by accident; leave SMTP empty or use a sandbox.
+      SMTP_HOST: ${SMTP_HOST:-}
+
+  worker:
+    image: mimd-worker:${IMAGE_TAG:-staging}
+    environment:
+      LOG_LEVEL: debug
+
+  migrate:
+    image: mimd-worker:${IMAGE_TAG:-staging}
+
+  seed:
+    image: mimd-worker:${IMAGE_TAG:-staging}
+
+  caddy:
+    # When production already owns 80/443 on this host, remove this service from staging and add
+    # a second site block to the production Caddyfile that proxies to mimd-staging-app-1:3000.
+    ports: !override
+      - "8080:80"
+      - "8443:443"

@@ -1,0 +1,135 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Production stack for a Hostinger VPS (or any Docker host).
+#
+#   cp .env.example .env.production   # fill in secrets, DOMAIN, POSTGRES_*
+#   docker compose --env-file .env.production up -d --build
+#
+# Services: db (postgres:16) → migrate (one-shot) → app + worker → caddy (HTTPS).
+# Demo seed (staging only):  docker compose --env-file .env.staging --profile demo run --rm seed
+# See docs/deployment-hostinger.md.
+# ─────────────────────────────────────────────────────────────────────────────
+name: mimd
+
+x-app-env: &app-env
+  NODE_ENV: production
+  DATABASE_URL: postgresql://${POSTGRES_USER:-mimd}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mimd}?schema=public
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
+  APP_URL: ${APP_URL:-https://${DOMAIN}}
+  NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Marketing Intelligence}
+  DEFAULT_LOCALE: ${DEFAULT_LOCALE:-ar}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  UPLOAD_DIR: /app/uploads
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-465}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  MAIL_FROM: ${MAIL_FROM:-}
+  CRON_SECRET: ${CRON_SECRET:-}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  AI_MODEL: ${AI_MODEL:-claude-opus-5-5}
+  META_APP_ID: ${META_APP_ID:-}
+  META_APP_SECRET: ${META_APP_SECRET:-}
+  META_AD_LIBRARY_TOKEN: ${META_AD_LIBRARY_TOKEN:-}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  GOOGLE_ADS_DEVELOPER_TOKEN: ${GOOGLE_ADS_DEVELOPER_TOKEN:-}
+  GOOGLE_ADS_LOGIN_CUSTOMER_ID: ${GOOGLE_ADS_LOGIN_CUSTOMER_ID:-}
+  TIKTOK_APP_ID: ${TIKTOK_APP_ID:-}
+  TIKTOK_APP_SECRET: ${TIKTOK_APP_SECRET:-}
+  LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
+  LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
+  X_CLIENT_ID: ${X_CLIENT_ID:-}
+  X_CLIENT_SECRET: ${X_CLIENT_SECRET:-}
+  SENTRY_DSN: ${SENTRY_DSN:-}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mimd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-mimd}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+    # Not published to the host. For a local psql: docker compose exec db psql -U mimd
+
+  migrate:
+    build: { context: ., target: worker }
+    image: mimd-worker:${IMAGE_TAG:-latest}
+    command: ["npx", "prisma", "migrate", "deploy"]
+    environment: *app-env
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+    logging: *logging
+
+  app:
+    build: { context: ., target: app }
+    image: mimd-app:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment: *app-env
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    expose: ["3000"]
+    logging: *logging
+
+  worker:
+    image: mimd-worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment: *app-env
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    logging: *logging
+
+  # Demo data — NEVER run against production. Enabled only with `--profile demo`.
+  seed:
+    image: mimd-worker:${IMAGE_TAG:-latest}
+    profiles: ["demo"]
+    command: ["npx", "tsx", "prisma/seed.ts"]
+    environment: *app-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: "no"
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,33 @@
+# systemd alternative to PM2 for the web process.
+#   sudo cp deploy/systemd/*.service deploy/systemd/*.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now mimd-web mimd-worker mimd-backup.timer
+# Assumes the app is checked out at /opt/mimd, owned by the unprivileged user `mimd`,
+# built with `npm run build`, and static assets copied by scripts/deploy.sh.
+[Unit]
+Description=Marketing Intelligence Dashboard — web (Next.js standalone)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mimd
+Group=mimd
+WorkingDirectory=/opt/mimd/.next/standalone
+EnvironmentFile=/opt/mimd/.env
+Environment=NODE_ENV=production PORT=3000 HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+TimeoutStopSec=15
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/mimd/uploads /opt/mimd/.next/standalone/.next/cache
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mimd-web
+
+[Install]
+WantedBy=multi-user.target

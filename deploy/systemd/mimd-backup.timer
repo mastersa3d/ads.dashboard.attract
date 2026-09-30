@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily backup of the Marketing Intelligence Dashboard
+
+[Timer]
+# 02:30 server time, with up to 15 min jitter
+OnCalendar=*-*-* 02:30:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target
