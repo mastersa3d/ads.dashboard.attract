@@ -350,4 +350,5 @@ const ar: Record<string, string> = {
   "alert.TREND.body": "ارتفع الاهتمام بنسبة {pct} ({source}). فكّر في فكرة محتوى مناسبة للتوقيت.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

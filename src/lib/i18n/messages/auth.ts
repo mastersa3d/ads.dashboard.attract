@@ -77,4 +77,5 @@ const ar: Record<string, string> = {
   privacy: "سياسة الخصوصية",
   terms: "شروط الاستخدام",
 };
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

@@ -579,4 +579,5 @@ const ar: Record<string, string> = {
   "pva.action.aov": "روّج للباقات والمنتجات الأعلى قيمة وراجع الخصومات.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

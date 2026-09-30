@@ -255,4 +255,5 @@ const ar: Record<string, string> = {
   "act.performance": "عرض أداء الفريق",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

@@ -607,4 +607,5 @@ const ar: Record<string, string> = {
   "err.noNewSuggestions": "لم يتم العثور على منافسين جدد من المصادر المتاحة. حاول لاحقًا أو أضف منافسًا يدويًا.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

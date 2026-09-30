@@ -37,4 +37,5 @@ const ar: Record<string, string> = {
   showChanges: "عرض التغييرات",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

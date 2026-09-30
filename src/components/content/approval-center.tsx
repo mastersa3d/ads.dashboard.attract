@@ -173,7 +173,7 @@ export function ApprovalCenter({
                       {it.approvalDeadline && (
                         <Badge tone={overdue ? "bad" : "neutral"}>
                           {overdue && <AlertTriangle className="size-3" aria-hidden />}
-                          {t("content.deadline")}: <span className="num">{fmtRelative(it.approvalDeadline, locale)}</span>
+                          {t("content.deadline")}: <span className="num">{fmtRelative(it.approvalDeadline, locale, now)}</span>
                         </Badge>
                       )}
                     </div>

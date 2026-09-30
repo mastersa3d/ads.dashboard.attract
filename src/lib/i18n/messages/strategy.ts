@@ -369,4 +369,5 @@ const ar: Record<string, string> = {
   "rule.planWhy": "مبنية على كفاءة الحملات (الأفضل: {best}، الأضعف: {worst}) وأعلى {ideas} أفكار تأثيرًا في بنك الأفكار.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

@@ -253,4 +253,5 @@ const ar: Record<string, string> = {
   "email.note": "هذا الرابط للقراءة فقط وصالح لمدة {days} يوماً. استخدم \"حفظ بصيغة PDF\" في المتصفح للاحتفاظ بنسخة.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

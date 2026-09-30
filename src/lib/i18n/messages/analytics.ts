@@ -278,4 +278,5 @@ const ar: Record<string, string> = {
   col_entity: "الكيان",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

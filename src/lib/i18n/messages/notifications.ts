@@ -79,4 +79,5 @@ const ar: Record<string, string> = {
   "type.REALLOCATION": "إعادة توزيع الميزانية",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

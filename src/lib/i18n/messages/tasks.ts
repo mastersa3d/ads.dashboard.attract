@@ -49,4 +49,5 @@ const ar: Record<string, string> = {
   "col.report": "التقرير المرتبط",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

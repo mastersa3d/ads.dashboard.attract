@@ -471,4 +471,5 @@ const ar: Record<string, string> = {
   "err.alreadyInCalendar": "هذه الفكرة موجودة بالفعل في تقويم المحتوى.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

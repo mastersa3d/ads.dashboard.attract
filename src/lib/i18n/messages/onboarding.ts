@@ -91,4 +91,5 @@ const ar: Record<string, string> = {
   secureAccount: "تأمين حسابك (التحقق بخطوتين)",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

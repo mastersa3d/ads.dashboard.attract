@@ -308,4 +308,5 @@ const ar: Record<string, string> = {
   "legal.terms.7.b": "قد يتم تحديث هذه الشروط، وسيُعلن عن التغييرات الجوهرية داخل المنصة قبل سريانها.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

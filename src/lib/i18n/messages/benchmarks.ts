@@ -255,4 +255,5 @@ const ar: Record<string, string> = {
   rec_FOLLOWER_GROWTH_good: "جمهورك ينمو أسرع من السوق — حافظ على وتيرة النشر وحوّل المتابعين إلى عملاء عبر إعادة الاستهداف.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

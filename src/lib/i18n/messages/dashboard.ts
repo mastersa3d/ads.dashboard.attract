@@ -149,4 +149,5 @@ const ar: Record<string, string> = {
   "ins.planSource": "خطة الميزانية",
   "ins.forecastSource": "توقع حسب وتيرة الصرف",
 };
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

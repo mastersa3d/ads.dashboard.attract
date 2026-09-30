@@ -41,10 +41,11 @@ export function fmtDateTime(d: Date | string | null | undefined, locale: Locale 
   return fmtDate(d, locale, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone });
 }
 
-export function fmtRelative(d: Date | string | null | undefined, locale: Locale = "en") {
+/** Pass `now` from the server in client components to avoid hydration mismatches. */
+export function fmtRelative(d: Date | string | null | undefined, locale: Locale = "en", now: Date = new Date()) {
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d) : d;
-  const diff = (date.getTime() - Date.now()) / 1000;
+  const diff = (date.getTime() - now.getTime()) / 1000;
   const rtf = new Intl.RelativeTimeFormat(intlLocale(locale), { numeric: "auto" });
   const abs = Math.abs(diff);
   if (abs < 60) return rtf.format(Math.round(diff), "second");

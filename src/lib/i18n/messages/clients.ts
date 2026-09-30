@@ -283,4 +283,5 @@ const ar: Record<string, string> = {
   noCandidates: "كل من يمكن إسناده لديه وصول بالفعل.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

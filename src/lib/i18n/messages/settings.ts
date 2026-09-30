@@ -310,4 +310,5 @@ const ar: Record<string, string> = {
   backupHow2: "انسخ النسخ الاحتياطية خارج الخادم بانتظام (مثل التخزين السحابي) واختبر الاستعادة مرة كل ربع سنة على الأقل. الملفات المرفوعة تُخزَّن بشكل منفصل ويجب تضمينها في النسخة الخارجية.",
 };
 
-export default { en, ar };
+const messages = { en, ar };
+export default messages;

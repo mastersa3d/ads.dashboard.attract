@@ -70,7 +70,10 @@ export function FilterBar({ options }: { options: FilterOptions }) {
   const get = (k: string) => sp.get(k) ?? "";
   const set = (patch: Record<string, string | null>) => {
     const q = new URLSearchParams(sp.toString());
-    for (const [k, v] of Object.entries(patch)) (v ? q.set(k, v) : q.delete(k));
+    for (const [k, v] of Object.entries(patch)) {
+      if (v) q.set(k, v);
+      else q.delete(k);
+    }
     start(() => router.push(`${pathname}?${q.toString()}`, { scroll: false }));
   };
 
