@@ -11,7 +11,7 @@ import { NAV } from "@/components/layout/nav";
 import { CURRENCIES, isTimezone } from "@/components/admin/constants";
 import type { ActionResult } from "@/components/admin/action-result";
 import { ActionError, formFields, formList, guarded, orNull, safePath, splitList } from "@/components/admin/server-action";
-import { markOnboardingStep } from "@/app/actions/settings";
+import { markOnboardingStep } from "@/components/settings/org-settings";
 
 // ───────────── validation ─────────────
 

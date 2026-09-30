@@ -21,32 +21,3 @@ export async function competitorAlertRecipients(organizationId: string, clientId
     })
     .map((u) => u.id);
 }
-
-/** One in-app notification per recipient; `dedupeKey` (unique per user) makes re-imports idempotent. */
-export async function notifyCompetitorChange(opts: {
-  organizationId: string;
-  clientId: string;
-  competitorId: string;
-  title: string;
-  body: string;
-  dedupeKey: string;
-  severity?: "INFO" | "WARNING";
-}) {
-  const recipients = await competitorAlertRecipients(opts.organizationId, opts.clientId);
-  if (!recipients.length) return 0;
-  const r = await db.notification.createMany({
-    data: recipients.map((userId) => ({
-      organizationId: opts.organizationId,
-      userId,
-      clientId: opts.clientId,
-      type: "COMPETITOR_AD",
-      severity: opts.severity ?? "INFO",
-      title: opts.title,
-      body: opts.body,
-      link: `/competitors/${opts.competitorId}?client=${opts.clientId}`,
-      dedupeKey: opts.dedupeKey,
-    })),
-    skipDuplicates: true,
-  });
-  return r.count;
-}

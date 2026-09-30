@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { Check, Copy } from "lucide-react";
 import { useI18n } from "@/lib/i18n/client";
 import { Button, Callout, cx } from "@/components/ui/primitives";
@@ -35,6 +35,8 @@ export function ActionForm({
   const { t } = useI18n();
   const [state, setState] = useState<ActionResult>(undefined);
   const [pending, start] = useTransition();
+  // bumping the key remounts the fields (incl. client inputs with local state) = a full reset
+  const [generation, setGeneration] = useState(0);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,14 +46,17 @@ export function ActionForm({
     start(async () => {
       const r = await action(state, data);
       setState(r);
-      if (r?.ok && resetOnSuccess) form.reset();
+      if (r?.ok && resetOnSuccess) {
+        form.reset();
+        setGeneration((g) => g + 1);
+      }
     });
   }
 
   return (
     <form onSubmit={onSubmit} className={cx("space-y-4", className)}>
       <fieldset disabled={pending || disabled} className="contents">
-        {children}
+        <Fragment key={generation}>{children}</Fragment>
       </fieldset>
       <ResultMessage state={state} />
       <div className="flex flex-wrap items-center gap-2">

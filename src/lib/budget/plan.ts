@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Platform } from "@prisma/client";
+import type { BudgetLine, BudgetPlan, Platform } from "@prisma/client";
 import { COST_KEYS, SCENARIO_WEIGHTS, type CostAssumption, type CostSource, type ScenarioWeights, type Phasing } from "./allocation";
 
 /**
@@ -77,6 +77,9 @@ export function readAssumptions(raw: unknown): PlanAssumptions {
   };
 }
 
+/** Platforms that can carry paid media in a plan. */
+export const PAID_PLATFORMS: Platform[] = ["META", "GOOGLE_ADS", "TIKTOK", "LINKEDIN", "YOUTUBE", "X"];
+
 /** Media lines carry ad spend; the rest are reserves or non-media costs tracked through expenses. */
 export const MEDIA_CATEGORIES = ["PLATFORM", "OBJECTIVE", "FUNNEL", "PROSPECTING", "RETARGETING", "RETENTION", "CAMPAIGN", "AUDIENCE"] as const;
 export function isMediaLine(l: { category: string; platform: Platform | null; campaignId: string | null }) {
@@ -86,3 +89,12 @@ export function isMediaLine(l: { category: string; platform: Platform | null; ca
 export function planDays(start: Date, end: Date) {
   return Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000) + 1);
 }
+
+/** Display label: campaign lines keep their campaign name; generated lines are translated. */
+export function lineLabel(l: { category: string; platform: Platform | null; campaignId: string | null; label: string }, t: (k: string) => string) {
+  if (l.category === "CAMPAIGN" || l.campaignId) return l.label;
+  const cat = t(`budget.cat.${l.category}`);
+  return l.platform ? `${t(`platform.${l.platform}`)} · ${cat}` : cat;
+}
+
+export type PlanWithLinesLite = BudgetPlan & { lines: BudgetLine[] };

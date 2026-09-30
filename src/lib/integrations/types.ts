@@ -54,7 +54,8 @@ export type NormalizedMetric = {
 export type NormalizedOrganic = {
   accountExternalId: string;
   date: string; // yyyy-mm-dd
-  followers: number;
+  /** null = the API does not report history for this day; the stored value is kept. */
+  followers: number | null;
   posts: number;
   reach: number;
   impressions: number;

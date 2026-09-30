@@ -1,3 +1,5 @@
+import { intlLocale, type Locale } from "@/lib/format";
+
 /**
  * Timezone helpers for the content calendar. Posts are stored in UTC and displayed / edited
  * in the client's IANA timezone (Client.timezone, e.g. "Africa/Cairo", "Asia/Dubai").
@@ -128,3 +130,18 @@ export const COMMON_TIMEZONES = [
   "America/New_York",
   "UTC",
 ];
+
+/** Localised weekday name for 0 = Sunday … 6 = Saturday. */
+export function weekdayName(w: number, locale: Locale, style: "long" | "short" = "long") {
+  return new Intl.DateTimeFormat(intlLocale(locale), { weekday: style, timeZone: "UTC" }).format(new Date(Date.UTC(2023, 0, 1 + w)));
+}
+
+/** Localised clock label for an hour (and optional minute) of the day. */
+export function clockLabel(hour: number, locale: Locale, minute = 0) {
+  return new Intl.DateTimeFormat(intlLocale(locale), { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(new Date(Date.UTC(2023, 0, 1, hour, minute)));
+}
+
+/** Localised label for a "YYYY-MM-DD" key. */
+export function dayLabel(day: string, locale: Locale, opts: Intl.DateTimeFormatOptions = { weekday: "short", day: "numeric", month: "short" }) {
+  return new Intl.DateTimeFormat(intlLocale(locale), { ...opts, timeZone: "UTC" }).format(new Date(day + "T00:00:00Z"));
+}
