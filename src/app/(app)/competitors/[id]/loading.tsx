@@ -5,7 +5,7 @@ export default function CompetitorProfileLoading() {
     <div className="space-y-6" aria-busy="true">
       <Skeleton className="h-4 w-40" />
       <Skeleton className="h-10 w-80" />
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 [&>*]:min-w-0">
         <Skeleton className="h-96 xl:col-span-2" />
         <div className="space-y-4">
           <Skeleton className="h-40" />

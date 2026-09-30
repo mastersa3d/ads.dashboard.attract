@@ -22,7 +22,7 @@ export function TaskStatusSelect({ id, status, label }: { id: string; status: st
       aria-label={label}
       value={value}
       disabled={pending}
-      className={cx(inputClass, "h-8 w-auto py-0 text-xs")}
+      className={cx(inputClass, "h-8 w-auto min-w-32 py-0 pe-8 text-xs")}
       onChange={(e) => {
         const next = e.target.value;
         setValue(next);

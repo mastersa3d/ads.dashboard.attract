@@ -72,7 +72,8 @@ export function AdsExplorer({ ads, competitors, canEdit, profileHref, clientQuer
     () =>
       months.map((m) => {
         const row: Record<string, string | number> = { label: fmtDate(m + "-01T00:00:00Z", locale as Locale, { month: "short", year: "2-digit" }) };
-        for (const c of compNames) row[c] = filtered.filter((a) => a.competitor === c && monthKey(a.firstSeen) === m).length;
+        // index keys: competitor names may contain dots, which Recharts reads as nested paths
+        compNames.forEach((c, i) => (row[`c${i}`] = filtered.filter((a) => a.competitor === c && monthKey(a.firstSeen) === m).length));
         return row;
       }),
     [months, compNames, filtered, locale],
@@ -185,7 +186,7 @@ export function AdsExplorer({ ads, competitors, canEdit, profileHref, clientQuer
                 />
                 {compNames.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
                 {compNames.map((c, i) => (
-                  <Bar key={c} dataKey={c} stackId="a" fill={SERIES_COLORS[i % SERIES_COLORS.length]} maxBarSize={28} />
+                  <Bar key={c} dataKey={`c${i}`} name={c} stackId="a" fill={SERIES_COLORS[i % SERIES_COLORS.length]} maxBarSize={28} />
                 ))}
               </BarChart>
             </ResponsiveContainer>

@@ -75,13 +75,13 @@ export function SharePanel({ reportId, active, expiresAt }: { reportId: string; 
 export function SchedulePanel({
   reportId,
   initial,
-  nextRun,
+  nextRunLabel,
 }: {
   reportId: string;
   initial: { freq: "none" | "daily" | "weekly" | "monthly"; weekday: string; monthDay: number; time: string; recipients: string[]; rolling: boolean };
-  nextRun: string | null;
+  nextRunLabel: string | null;
 }) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const router = useRouter();
   const errorText = useErrorText();
   const [pending, start] = useTransition();
@@ -129,7 +129,7 @@ export function SchedulePanel({
         <input type="checkbox" className="size-4 accent-[var(--brand)]" checked={s.rolling} onChange={(e) => setS({ ...s, rolling: e.target.checked })} />
         {t("reports.schedule.rolling")}
       </label>
-      {nextRun && s.freq !== "none" && <p className="text-xs text-muted">{t("reports.schedule.next", { date: new Date(nextRun).toLocaleString(locale === "ar" ? "ar-EG-u-nu-latn" : "en-US") })}</p>}
+      {nextRunLabel && s.freq !== "none" && <p className="text-xs text-muted">{t("reports.schedule.next", { date: nextRunLabel })}</p>}
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" variant="primary" disabled={pending}>
           {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}

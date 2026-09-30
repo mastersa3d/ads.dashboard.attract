@@ -85,7 +85,7 @@ export async function SeasonalSection({ ctx, sp, base }: { ctx: PageContext; sp:
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 [&>*]:min-w-0">
             <Card>
               <CardHeader title={t("competitors.seasonal.yoyTitle")} subtitle={t("competitors.seasonal.yoySubtitle", { window: windowLabel })} meta={meta} />
               <CardBody className="space-y-3">
@@ -149,7 +149,7 @@ export async function SeasonalSection({ ctx, sp, base }: { ctx: PageContext; sp:
             </CardBody>
           </Card>
 
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 [&>*]:min-w-0">
             <Card>
               <CardHeader title={t("competitors.seasonal.occasionTable")} meta={meta} />
               <SimpleTable

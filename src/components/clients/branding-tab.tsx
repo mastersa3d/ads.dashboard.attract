@@ -23,7 +23,7 @@ export function BrandingTab({ ctx, client }: { ctx: PageContext; client: Client 
 
   return (
     <ActionForm action={updateClientBranding.bind(null, client.id)} className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader title={t("clients.brandIdentity")} meta={<DataMeta source={t("clients.profileSource")} updated={ctx.rel(client.updatedAt)} demo={client.isDemo} labels={ctx.metaLabels} />} />
           <CardBody className="space-y-4">
@@ -78,7 +78,7 @@ export function BrandingTab({ ctx, client }: { ctx: PageContext; client: Client 
         </CardBody>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title={t("clients.reportTheme")} subtitle={t("clients.reportThemeHint")} />
           <CardBody className="grid gap-4 sm:grid-cols-2">

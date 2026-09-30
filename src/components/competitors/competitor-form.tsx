@@ -4,8 +4,8 @@ import { useI18n } from "@/lib/i18n/client";
 import { Field, Input, Select, Textarea } from "@/components/ui/primitives";
 import { saveCompetitor } from "@/app/actions/competitors";
 import { ActionForm } from "./action-form";
+import { SOCIAL_KEYS } from "@/lib/competitors/constants";
 
-export const SOCIAL_KEYS = ["facebook", "instagram", "tiktok", "linkedin", "youtube", "x"] as const;
 export const COMPETITOR_PLATFORMS = ["FACEBOOK", "INSTAGRAM", "TIKTOK", "LINKEDIN", "YOUTUBE", "X", "GOOGLE_ADS"] as const;
 
 export type FollowerStat = { count: number; growthPct: number | null; asOf: string; source: string };

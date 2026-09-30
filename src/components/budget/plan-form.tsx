@@ -218,7 +218,7 @@ export function PlanForm({
     <form onSubmit={submit} className="space-y-5">
       <Card>
         <CardHeader title={t("budget.form.basics")} />
-        <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <CardBody className="grid gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-4">
           <Field label={t("budget.form.name")} htmlFor="pf-name" className="sm:col-span-2">
             <Input id="pf-name" required maxLength={160} value={v.name} onChange={(e) => set("name", e.target.value)} />
           </Field>
@@ -264,7 +264,7 @@ export function PlanForm({
               })}
             </div>
           </fieldset>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 [&>*]:min-w-0 lg:grid-cols-3">
             <Field label={t("budget.form.products")} htmlFor="pf-products">
               <TagInput id="pf-products" value={v.products} onChange={(x) => set("products", x)} suggestions={suggestions.products} placeholder={t("budget.form.tagPlaceholder")} />
             </Field>
@@ -442,7 +442,7 @@ export function PlanForm({
         <Card>
           <CardHeader title={t("budget.form.preview")} subtitle={t("budget.form.previewHint")} meta={<EstimateBadge label={t("ui.estimate")} hint={t("budget.estimateMethod")} />} />
           <CardBody className="space-y-5">
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid gap-5 [&>*]:min-w-0 lg:grid-cols-2">
               <DonutChart
                 format="money"
                 currency={v.currency}
@@ -478,7 +478,7 @@ export function PlanForm({
                 <span key="r" className="num whitespace-nowrap">{money(l.revenue)}</span>,
               ])}
             />
-            <div className="grid gap-5 md:grid-cols-3">
+            <div className="grid gap-5 [&>*]:min-w-0 md:grid-cols-3">
               <div>
                 <h4 className="mb-2 text-xs font-semibold text-muted">{t("budget.view.funnel")}</h4>
                 <SimpleTable head={[t("filter.funnel"), t("budget.planned")]} rows={alloc.views.byFunnel.map((x) => [t(`funnel.${x.key}`), <span key="a" className="num">{money(x.amount)}</span>])} />

@@ -21,7 +21,7 @@ export async function SourcesSection({ ctx }: { ctx: PageContext }) {
       <Callout tone="info" title={t("trends.sources.noScrapingTitle")}>
         {t("trends.sources.noScraping")}
       </Callout>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 [&>*]:min-w-0">
         <Card>
           <CardHeader title={t("trends.sources.searchConsole")} subtitle={t("trends.sources.searchConsoleHint")} />
           <CardBody>
@@ -47,7 +47,7 @@ export async function SourcesSection({ ctx }: { ctx: PageContext }) {
         </Card>
       </div>
       {canEdit ? (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 [&>*]:min-w-0">
           <Card>
             <CardHeader title={t("trends.sources.googleTrends")} subtitle={t("trends.sources.googleTrendsHint")} />
             <CardBody>

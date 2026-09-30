@@ -2,7 +2,7 @@ import { CheckCircle2, AlertTriangle, Lightbulb, ListTodo, MessageSquare, Sparkl
 import type { Report } from "@prisma/client";
 import type { TFunction } from "@/lib/i18n/translate";
 import { delta, trendTone, type KpiKey, type Kpis } from "@/lib/metrics";
-import { fmtCompact, fmtDate, fmtMoney, fmtNumber, fmtPct, type Locale } from "@/lib/format";
+import { fmtCompact, fmtDate, fmtMoney, fmtNumber, fmtPct, intlLocale, type Locale } from "@/lib/format";
 import { toChartRows } from "@/lib/queries/performance";
 import type { ReportData } from "@/lib/reports/data";
 import type { ReportKpi } from "@/lib/reports/schema";
@@ -15,7 +15,11 @@ const PCT: ReportKpi[] = ["roi", "cvr", "ctr", "engagementRate"];
 const RATIO: ReportKpi[] = ["roas", "frequency"];
 
 export function formatKpi(k: ReportKpi, v: number | null, currency: string, locale: Locale) {
-  if (MONEY.includes(k)) return fmtMoney(v, currency, locale, k === "cpc" ? 2 : 0);
+  if (MONEY.includes(k)) {
+    // Large totals are shown compact so KPI tiles never truncate on phones (exact values are in the tables).
+    if (v != null && Math.abs(v) >= 100_000) return new Intl.NumberFormat(intlLocale(locale), { style: "currency", currency, notation: "compact", maximumFractionDigits: 1 }).format(v);
+    return fmtMoney(v, currency, locale, k === "cpc" ? 2 : 0);
+  }
   if (PCT.includes(k)) return fmtPct(v, locale, 2);
   if (RATIO.includes(k)) return v == null ? "—" : fmtNumber(v, locale, 2) + (k === "roas" ? "x" : "");
   return fmtCompact(v, locale);
@@ -105,7 +109,7 @@ export function ReportDocument({
 
       <section aria-labelledby="kpi-h" className="space-y-2">
         <h2 id="kpi-h" className="text-sm font-semibold text-muted">{t("reports.section.kpis")}</h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">
           {config.kpis.map((k) => {
             const key = k as KpiKey;
             const d = p ? delta(c[key] as number | null, p[key] as number | null) : undefined;

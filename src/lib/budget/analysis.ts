@@ -67,7 +67,8 @@ export async function analyzePlan(plan: PlanWithLines, fx: FxTable, now = new Da
       expenses: x.expenses,
       variance: x.spend - planned,
       variancePct: planned ? (x.spend - planned) / planned : null,
-      tone: act.started && expectedByNow > 0 ? (Math.abs(v.pct ?? 0) <= 0.08 ? "good" : varianceTone(v.pct, "cost") === "good" ? "warning" : varianceTone(v.pct, "cost")) : "neutral",
+      // Unspent reserves are normal; only overspending a non-media line is flagged.
+      tone: !media ? (x.spend > planned ? "bad" : "neutral") : act.started && expectedByNow > 0 ? (Math.abs(v.pct ?? 0) <= 0.08 ? "good" : varianceTone(v.pct, "cost") === "good" ? "warning" : varianceTone(v.pct, "cost")) : "neutral",
       expectedByNow,
       plannedResult: plannedOf(l, metric),
       plannedResultByNow: plannedOf(l, metric) * ratio,

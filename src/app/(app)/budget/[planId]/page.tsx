@@ -169,7 +169,7 @@ export default async function PlanPage({ params, searchParams }: { params: Promi
             active={grain}
             tabs={(["daily", "weekly", "monthly"] as const).map((g) => ({ key: g, label: t(`budget.grain.${g}`), href: `/budget/${plan.id}?${qs}&pace=${g}` }))}
           />
-          <div className="grid gap-5 xl:grid-cols-2">
+          <div className="grid gap-5 [&>*]:min-w-0 xl:grid-cols-2">
             <div>
               <h4 className="mb-2 text-xs font-semibold text-muted">{t("budget.cumulative")}</h4>
               <TimeSeriesChart
@@ -283,7 +283,7 @@ export default async function PlanPage({ params, searchParams }: { params: Promi
         </div>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 [&>*]:min-w-0 xl:grid-cols-2">
         <Card>
           <CardHeader title={t("budget.realloc.title2")} subtitle={t("budget.realloc.subtitle", { effName })} meta={metaEst} />
           <CardBody>
@@ -295,7 +295,7 @@ export default async function PlanPage({ params, searchParams }: { params: Promi
                 fromLabel: labels.get(p.fromId)!,
                 toLabel: labels.get(p.toId)!,
                 amountLabel: money(p.amount),
-                reason: t("budget.realloc.reason", { from: labels.get(p.fromId)!, to: labels.get(p.toId)!, fromEff: fmtEff(p.fromEfficiency), toEff: fmtEff(p.toEfficiency), effName, avg: fmtEff(an.avgEfficiency) }),
+                reason: t(p.fromEfficiency > 0 ? "budget.realloc.reason" : "budget.realloc.reasonNoResults", { from: labels.get(p.fromId)!, to: labels.get(p.toId)!, fromEff: fmtEff(p.fromEfficiency), toEff: fmtEff(p.toEfficiency), effName, avg: fmtEff(an.avgEfficiency) }),
               }))}
             />
             {an.decided.length > 0 && (
@@ -328,7 +328,7 @@ export default async function PlanPage({ params, searchParams }: { params: Promi
                 ))}
               </div>
             )}
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 [&>*]:min-w-0 sm:grid-cols-2">
               <SimpleTable head={[t("budget.category"), t("budget.planned")]} rows={byCategory.map((x) => [x.label, <span key="a" className="num">{money(x.value)}</span>])} />
               <SimpleTable head={[t("filter.funnel"), t("budget.planned")]} rows={byFunnel.map((x) => [x.label, <span key="a" className="num">{money(x.value)}</span>])} />
             </div>

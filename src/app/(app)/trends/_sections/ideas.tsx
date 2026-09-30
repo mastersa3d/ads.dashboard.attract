@@ -39,7 +39,7 @@ export async function TrendIdeasSection({ ctx, sp, base }: { ctx: PageContext; s
         {t("trends.ideas.guard")}
       </Callout>
 
-      <div className="grid gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5 [&>*]:min-w-0">
         <Card className="xl:col-span-3">
           <CardHeader title={t("trends.matrix.title")} subtitle={t("trends.matrix.subtitle")} meta={meta} />
           <CardBody>

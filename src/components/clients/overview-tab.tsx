@@ -63,7 +63,7 @@ export async function OverviewTab({ ctx, client }: { ctx: PageContext; client: C
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader
             title={t("clients.linkedAccounts")}

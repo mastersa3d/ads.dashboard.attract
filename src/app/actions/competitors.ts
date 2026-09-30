@@ -16,6 +16,7 @@ import { suggestCompetitors } from "@/lib/competitors/suggestions";
 import { searchAdLibrary, mapLibraryAd, adLibraryConfigured } from "@/lib/competitors/meta-ad-library";
 import { competitorAlertRecipients } from "@/lib/competitors/alerts";
 import { topValues } from "@/lib/competitors/intensity";
+import { SOCIAL_KEYS } from "@/lib/competitors/constants";
 
 /** Business limits (enforced here, mirrored in the UI). */
 const MAX_MANUAL = 4;
@@ -50,7 +51,6 @@ const bool = z.unknown().transform((v) => v === "on" || v === "true" || v === "1
 const arrayOf = <T extends z.ZodType>(item: T) => z.preprocess((v) => (v == null || v === "" ? [] : Array.isArray(v) ? v : [v]), z.array(item));
 const id = z.string().min(1).max(40);
 
-const SOCIAL_KEYS = ["facebook", "instagram", "tiktok", "linkedin", "youtube", "x"] as const;
 
 const competitorSchema = z.object({
   id: id.optional(),

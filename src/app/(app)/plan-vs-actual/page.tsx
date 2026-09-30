@@ -222,7 +222,7 @@ export default async function PlanVsActualPage({ searchParams }: { searchParams:
         </CardBody>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-4 [&>*]:min-w-0 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader title={t("budget.pva.forecastTitle")} subtitle={t("budget.pva.forecastSubtitle")} meta={metaEst} />
           <CardBody>
@@ -251,7 +251,7 @@ export default async function PlanVsActualPage({ searchParams }: { searchParams:
       </div>
 
       {drivers && (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 [&>*]:min-w-0 lg:grid-cols-2">
           <Card>
             <CardHeader title={t("budget.pva.driversTitle")} subtitle={t("budget.pva.driversSubtitle")} meta={metaEst} />
             <CardBody className="space-y-4">

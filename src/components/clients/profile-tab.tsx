@@ -29,7 +29,7 @@ export async function ProfileTab({ ctx, client, canEdit }: { ctx: PageContext; c
   const meta = <DataMeta source={t("clients.profileSource")} updated={ctx.rel(client.updatedAt)} demo={client.isDemo} labels={ctx.metaLabels} />;
 
   const related = (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3">
       <Card>
         <CardHeader title={t("clients.linkedAccounts")} meta={meta} />
         <CardBody>

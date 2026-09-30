@@ -67,7 +67,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
             <CardBody>
               <SchedulePanel
                 reportId={report.id}
-                nextRun={next?.toISOString() ?? null}
+                nextRunLabel={next ? fmtDateTime(next, locale, data.client.timezone) : null}
                 initial={{
                   freq: sched?.freq ?? "none",
                   weekday: sched?.freq === "weekly" ? WEEKDAYS[sched.day] : "mon",

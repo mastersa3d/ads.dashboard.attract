@@ -206,7 +206,7 @@ export async function OverviewSection({ ctx }: { ctx: PageContext }) {
         </CardBody>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 [&>*]:min-w-0">
         <Card>
           <CardHeader
             title={t("competitors.intensity.compareTitle")}

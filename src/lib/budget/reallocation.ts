@@ -25,7 +25,8 @@ const HIGH = 1.2; // ≥ 120%
 export function reallocate(lines: LinePerf[], opts: { elapsedRatio: number; maxProposals?: number }) {
   const advice = new Map<string, LineAdvice>();
   const elapsed = Math.max(0, Math.min(1, opts.elapsedRatio));
-  const eligible = lines.filter((l) => l.actual > 0 && l.actual >= l.planned * elapsed * 0.1);
+  // Lines not planned to produce this result (e.g. awareness judged on leads) are not compared.
+  const eligible = lines.filter((l) => l.actual > 0 && l.actual >= l.planned * elapsed * 0.1 && (l.plannedResults > 0 || l.results > 0));
   const totActual = eligible.reduce((s, l) => s + l.actual, 0);
   const totResults = eligible.reduce((s, l) => s + l.results, 0);
   const avg = totActual > 0 && totResults > 0 ? totResults / totActual : null;
@@ -35,10 +36,14 @@ export function reallocate(lines: LinePerf[], opts: { elapsedRatio: number; maxP
     const pacing = expected > 0 ? l.actual / expected : null;
     const eff = l.actual > 0 ? l.results / l.actual : null;
     let a: LineAdvice = { action: "hold", reason: "onTrack", efficiency: eff, avgEfficiency: avg, pacing };
-    if (!eligible.includes(l) || avg == null) a = { ...a, action: "hold", reason: l.actual > 0 || elapsed > 0 ? (pacing != null && pacing < 0.5 && elapsed > 0.2 ? "underPacing" : "insufficientData") : "insufficientData" };
+    if (!eligible.includes(l) || avg == null) {
+      const reason: AdviceReason = pacing != null && pacing < 0.5 && elapsed > 0.2 ? "underPacing" : pacing != null && pacing > 1.15 ? "overPacing" : l.plannedResults === 0 && l.actual > 0 ? "onTrack" : "insufficientData";
+      a = { ...a, action: reason === "underPacing" || reason === "overPacing" ? "review" : "hold", reason };
+    }
     else if (l.results === 0) a = { ...a, action: "decrease", reason: "noResults" };
     else if (eff != null && eff <= avg * LOW) a = { ...a, action: "decrease", reason: "lowEfficiency" };
-    else if (eff != null && eff >= avg * HIGH) a = { ...a, action: pacing != null && pacing > 1.15 ? "hold" : "increase", reason: "highEfficiency" };
+    // Fast spend on an efficient line is a reason to fund it, not to hold it back.
+    else if (eff != null && eff >= avg * HIGH) a = { ...a, action: "increase", reason: "highEfficiency" };
     else if (pacing != null && pacing > 1.15) a = { ...a, action: "review", reason: "overPacing" };
     else if (pacing != null && pacing < 0.7) a = { ...a, action: "review", reason: "underPacing" };
     advice.set(l.id, a);

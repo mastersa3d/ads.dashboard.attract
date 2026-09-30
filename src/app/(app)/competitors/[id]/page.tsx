@@ -14,7 +14,8 @@ import { IntensityMeter } from "@/components/competitors/intensity-meter";
 import { AdsExplorer } from "@/components/competitors/ads-explorer";
 import { AdForm } from "@/components/competitors/ad-form";
 import { ImportAds, PostForm } from "@/components/competitors/import-ads";
-import { CompetitorForm, SOCIAL_KEYS } from "@/components/competitors/competitor-form";
+import { CompetitorForm } from "@/components/competitors/competitor-form";
+import { SOCIAL_KEYS } from "@/lib/competitors/constants";
 import { SuggestionCard } from "@/components/competitors/suggestion-card";
 import { ActionButton } from "@/components/competitors/action-form";
 import { deleteCompetitor, deleteCompetitorPost } from "@/app/actions/competitors";
@@ -138,7 +139,7 @@ export default async function CompetitorProfilePage({ params, searchParams }: { 
         />
       )}
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 [&>*]:min-w-0">
         <Card className="xl:col-span-2">
           <CardHeader title={t("competitors.profile.title")} meta={meta} />
           <CardBody className="space-y-5">
