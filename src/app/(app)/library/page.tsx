@@ -90,7 +90,9 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         {header}
         {searchForm(
           t("content.searchFiles"),
-          <Select name="kind" defaultValue={kind ?? ""} aria-label={t("content.kindLabel")} className="w-40" placeholder={t("ui.all")} options={(["image", "video", "pdf"] as const).map((k) => ({ value: k, label: t(`content.kind.${k}`) }))} />,
+          <div className="w-40">
+            <Select name="kind" defaultValue={kind ?? ""} aria-label={t("content.kindLabel")} placeholder={t("ui.all")} options={(["image", "video", "pdf"] as const).map((k) => ({ value: k, label: t(`content.kind.${k}`) }))} />
+          </div>,
         )}
         <Card>
           <CardHeader
@@ -169,13 +171,9 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
       <div className="flex flex-wrap items-center justify-between gap-2">
         {searchForm(
           t("content.searchContent"),
-          <Select
-            name="sort"
-            defaultValue={sort}
-            aria-label={t("content.sortLabel")}
-            className="w-44"
-            options={(["recent", "reach", "engagement"] as const).map((s) => ({ value: s, label: t(`content.sort.${s}`) }))}
-          />,
+          <div className="w-44">
+            <Select name="sort" defaultValue={sort} aria-label={t("content.sortLabel")} options={(["recent", "reach", "engagement"] as const).map((s) => ({ value: s, label: t(`content.sort.${s}`) }))} />
+          </div>,
         )}
         <div className="flex gap-1 no-print" role="group" aria-label={t("content.layout")}>
           <Link href={href({ layout: "grid" })} className={buttonClass(layout === "grid" ? "primary" : "secondary", "sm")} aria-label={t("content.grid")} aria-current={layout === "grid" ? "page" : undefined}>

@@ -55,8 +55,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </Link>
         </Callout>
       )}
-      <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
-        <nav aria-label={t("settings.title")} className="no-print">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <nav aria-label={t("settings.title")} className="min-w-0 no-print">
           <div className="flex gap-4 overflow-x-auto pb-1 lg:flex-col lg:gap-5">
             {groups.map((g) => (
               <div key={g.label} className="shrink-0">

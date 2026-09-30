@@ -2,11 +2,10 @@
 
 import { DownloadCloud } from "lucide-react";
 import { useI18n } from "@/lib/i18n/client";
-import { Callout, Field, Input } from "@/components/ui/primitives";
+import { Callout, Field, Input, Select } from "@/components/ui/primitives";
 import { importMetaAds, saveCompetitorPost } from "@/app/actions/competitors";
 import { ActionForm } from "./action-form";
 import { AD_PLATFORMS, CONTENT_TYPES } from "./ad-form";
-import { Select } from "@/components/ui/primitives";
 
 /** "Import from Meta Ad Library" (official API). Shows setup steps when the token is missing. */
 export function ImportAds({ competitorId, configured, pageId, country }: { competitorId: string; configured: boolean; pageId: string | null; country: string | null }) {

@@ -90,7 +90,25 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
                 return (
                   <IntegrationCard
                     key={i.id}
-                    i={{ ...i, hasToken: Boolean(i.accessTokenEnc || i.tokenLast4) }}
+                    // Explicit pick: encrypted token columns never travel further than this line.
+                    i={{
+                      id: i.id,
+                      label: i.label,
+                      platform: i.platform,
+                      status: i.status,
+                      enabled: i.enabled,
+                      hasToken: Boolean(i.accessTokenEnc || i.tokenLast4),
+                      tokenLast4: i.tokenLast4,
+                      tokenExpiresAt: i.tokenExpiresAt,
+                      scopesGranted: i.scopesGranted,
+                      scopesRequired: i.scopesRequired,
+                      lastSyncAt: i.lastSyncAt,
+                      lastSuccessAt: i.lastSuccessAt,
+                      lastError: i.lastError,
+                      updatedAt: i.updatedAt,
+                      client: i.client,
+                      accounts: i.accounts,
+                    }}
                     connector={connector}
                     configured={isConfigured(connector)}
                     canManage={canManage}
