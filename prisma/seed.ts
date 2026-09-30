@@ -261,7 +261,9 @@ async function main() {
             const isLead = cs.objective === "LEADS";
             // Results are driven by realistic target ROAS / CPL with noise, per ad quality.
             const revenueVal = cs.aov > 0 && cs.roas ? spend * cs.roas * quality * between(0.75, 1.25) : 0;
-            const purchases = cs.aov > 0 ? Math.round(revenueVal / cs.aov) : 0;
+            // stochastic rounding so low-volume days still convert proportionally
+            const expected = cs.aov > 0 ? revenueVal / cs.aov : 0;
+            const purchases = Math.floor(expected) + (rnd() < expected - Math.floor(expected) ? 1 : 0);
             const leads = Math.round((spend / (cs.cpl ?? 500)) * quality * between(0.7, 1.3) * (isLead ? 1 : 0.35));
             const videoViews = format === "VIDEO" || format === "REEL" ? Math.round(impressions * between(0.18, 0.32)) : 0;
             metrics.push({

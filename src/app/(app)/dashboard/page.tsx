@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { db } from "@/lib/db";
 import { pageContext, lastMetricSync, metricSources } from "@/lib/page";
 import type { RawParams } from "@/lib/filters";
 import { totalsWithComparison, dailySeries, byPlatform, byEntity, organicSummary, plannedBudget, toChartRows } from "@/lib/queries/performance";
@@ -31,7 +32,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     lastMetricSync(scope),
     metricSources(scope, t),
   ]);
-  const benchmarks = await benchmarksFor({ organizationId: ctx.user.organizationId, platforms: f.platforms, country: ctx.client?.isDemo ? "EG" : undefined });
+  const clientMeta = ctx.client ? await db.client.findUnique({ where: { id: ctx.client.id }, select: { country: true, industry: true } }) : null;
+  const benchmarks = await benchmarksFor({ organizationId: ctx.user.organizationId, platforms: f.platforms, country: clientMeta?.country, industry: clientMeta?.industry });
 
   // Forecast to the end of the plan period (or the selected range)
   const periodStart = budget.periodStart ?? f.from;
