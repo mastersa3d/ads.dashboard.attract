@@ -874,8 +874,8 @@ export function ContentDrawer({
               <span className="font-medium text-text">{v.editedBy ?? t("content.system")}</span>
               <span className="num">{fmtDateTime(v.createdAt, locale)}</span>
             </div>
-            {v.version === 1 && i === detail.versions.length - 1 ? (
-              <p className="text-xs text-muted">{t("content.created")}</p>
+            {i === detail.versions.length - 1 ? (
+              <p className="text-xs text-muted">{v.version === 1 ? t("content.created") : t("content.baseline")}</p>
             ) : v.changes.length === 0 ? (
               <p className="text-xs text-muted">{t("content.noChanges")}</p>
             ) : (

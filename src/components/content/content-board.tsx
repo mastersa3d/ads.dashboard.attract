@@ -305,6 +305,7 @@ export function ContentBoard({
             return (
               <div
                 key={d}
+                data-day={d}
                 {...dropProps(key, (id) => reschedule(id, d), canMove)}
                 className={cx(
                   "group relative min-h-16 border-b border-e border-border p-1 sm:min-h-28",
@@ -379,6 +380,7 @@ export function ContentBoard({
                 return (
                   <div
                     key={key}
+                    data-slot={`${d}T${String(h).padStart(2, "0")}`}
                     {...dropProps(key, (id) => reschedule(id, d, h), canMove)}
                     onDoubleClick={() => canCreate && setDrawer({ defaults: { day: d, time: `${String(h).padStart(2, "0")}:00` } })}
                     className={cx("min-h-10 space-y-0.5 border-b border-e border-border p-0.5", overKey === key && "bg-brand-soft ring-2 ring-inset ring-brand")}
@@ -458,6 +460,7 @@ export function ContentBoard({
             return (
               <section
                 key={s}
+                data-status={s}
                 aria-label={t(`contentStatus.${s}`)}
                 {...dropProps(key, (id) => {
                   const it = byId.get(id);
