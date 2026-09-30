@@ -37,7 +37,7 @@ export function KpiCard({
         <p className="truncate text-xs font-medium text-muted">{label}</p>
         {estimate && <span className="rounded bg-warn-soft px-1.5 text-[10px] font-medium text-warn">{estimate}</span>}
       </div>
-      <p className="num truncate text-2xl font-bold tracking-tight">{value}</p>
+      <p className={cx("num font-bold tracking-tight break-words", value.length > 11 ? "text-lg" : "text-2xl")}>{value}</p>
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {delta !== undefined && (
           <span className={cx("num inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium", toneCls)}>
