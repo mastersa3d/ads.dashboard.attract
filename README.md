@@ -19,6 +19,19 @@ Multi-client, multi-brand marketing platform for agencies — plan, run, approve
 * **Security**: 2FA (TOTP), DB sessions, lockout, rate limits, CSP/HSTS, audit trail.
 * **Ops**: Docker Compose (Postgres, app, worker, Caddy HTTPS) or PM2 + nginx; daily backups with off-site copy; CI.
 
+
+## Live demo in 10 minutes (Render)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mastersa3d/ads.dashboard.attract)
+
+`render.yaml` creates a PostgreSQL database and one web service, applies migrations, loads the
+clearly-labelled **demo workspace only when the database is empty** (`scripts/seed-if-empty.ts`,
+guarded by `DEMO_MODE=true`) and runs the background worker inside the web container
+(`scripts/start-demo.sh`). The login page then lists the demo accounts (password `Demo@12345`).
+Free Render instances sleep when idle and the free database is time-limited — use it for demos,
+and the Hostinger guide for real clients.
+
+
 ## Screenshots
 
 _Placeholder — add screenshots to `docs/images/` and reference them here:_

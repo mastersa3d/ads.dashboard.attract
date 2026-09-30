@@ -9,8 +9,11 @@ function key(): Buffer {
   const raw = process.env.ENCRYPTION_KEY;
   if (!raw) throw new Error("ENCRYPTION_KEY is not set");
   const buf = Buffer.from(raw, "base64");
-  if (buf.length !== 32) throw new Error("ENCRYPTION_KEY must be 32 bytes, base64 encoded");
-  return buf;
+  if (buf.length === 32) return buf;
+  // Platform-generated secrets (e.g. Render generateValue) may not decode to exactly 32 bytes:
+  // accept any high-entropy string of 32+ chars by hashing it to a 256-bit key.
+  if (raw.length >= 32) return createHash("sha256").update(raw).digest();
+  throw new Error("ENCRYPTION_KEY must be 32 bytes base64 (openssl rand -base64 32) or a random string of 32+ characters");
 }
 
 export function encrypt(plain: string): string {

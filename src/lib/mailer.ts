@@ -22,7 +22,7 @@ export async function sendMail(to: string | string[], subject: string, html: str
 }
 
 export function appUrl(path = "") {
-  return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "") + path;
+  return (process.env.APP_URL ?? process.env.RENDER_EXTERNAL_URL ?? "http://localhost:3000").replace(/\/$/, "") + path;
 }
 
 export function emailLayout(title: string, body: string) {

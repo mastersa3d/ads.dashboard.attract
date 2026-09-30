@@ -37,6 +37,8 @@ const en: Record<string, string> = {
   secure: "Secured with encrypted sessions and optional 2FA",
   privacy: "Privacy Policy",
   terms: "Terms of Service",
+  demoTitle: "Demo workspace",
+  demoBody: "Every number here is demo data. Try each role with the accounts below (same password):",
 };
 const ar: Record<string, string> = {
   signIn: "تسجيل الدخول",
@@ -76,6 +78,8 @@ const ar: Record<string, string> = {
   secure: "محمي بجلسات مشفرة وتحقق بخطوتين اختياري",
   privacy: "سياسة الخصوصية",
   terms: "شروط الاستخدام",
+  demoTitle: "مساحة عمل تجريبية",
+  demoBody: "كل الأرقام هنا بيانات تجريبية. جرّب كل دور بالحسابات التالية (نفس كلمة المرور):",
 };
 const messages = { en, ar };
 export default messages;

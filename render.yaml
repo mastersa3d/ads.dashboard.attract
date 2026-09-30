@@ -1,0 +1,40 @@
+# One-click DEMO deployment on Render (https://render.com/docs/blueprint-spec).
+# Creates a PostgreSQL database + one web service, loads the clearly-labelled demo workspace
+# on first boot, and runs the background worker inside the web container.
+# For real clients use the Hostinger guide (docs/deployment-hostinger.md) instead.
+databases:
+  - name: mimd-db
+    plan: free
+    databaseName: mimd
+    user: mimd
+
+services:
+  - type: web
+    name: marketing-intelligence-demo
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npx prisma generate && npm run build
+    startCommand: bash scripts/start-demo.sh
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mimd-db
+          property: connectionString
+      - key: ENCRYPTION_KEY
+        generateValue: true # random 256-bit base64 value
+      - key: CRON_SECRET
+        generateValue: true
+      - key: DEMO_MODE
+        value: "true"
+      - key: RUN_WORKER_IN_WEB
+        value: "true"
+      - key: DEFAULT_LOCALE
+        value: ar
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Marketing Intelligence
+      # Optional: ANTHROPIC_API_KEY enables the AI assistant; SMTP_* enables e-mail.
+      - key: ANTHROPIC_API_KEY
+        sync: false

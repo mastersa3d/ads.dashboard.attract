@@ -67,11 +67,11 @@ export function pkcePair() {
 }
 
 export function redirectUriFor(connectorId: string) {
-  return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "") + `/api/oauth/${connectorId}/callback`;
+  return (process.env.APP_URL ?? process.env.RENDER_EXTERNAL_URL ?? "http://localhost:3000").replace(/\/$/, "") + `/api/oauth/${connectorId}/callback`;
 }
 
 /** Where the browser lands after the flow (success or error) — always Settings → Integrations. */
 export function settingsRedirect(origin: string, params: Record<string, string>) {
-  const base = (process.env.APP_URL ?? origin).replace(/\/$/, "");
+  const base = (process.env.APP_URL ?? process.env.RENDER_EXTERNAL_URL ?? origin).replace(/\/$/, "");
   return `${base}/settings/integrations?${new URLSearchParams(params).toString()}`;
 }
