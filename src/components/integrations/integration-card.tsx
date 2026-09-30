@@ -7,6 +7,8 @@ import { expiryState, missingScopes, STATUS_TONE } from "@/lib/integrations/stat
 import type { Connector } from "@/lib/integrations/types";
 import { Badge, Callout, Card, CardBody, CardHeader, DataMeta, cx } from "@/components/ui/primitives";
 import { IntegrationControls } from "./integration-controls";
+import { EditIntegration } from "./edit-integration";
+import Link from "next/link";
 
 export type CardIntegration = {
   id: string;
@@ -23,6 +25,7 @@ export type CardIntegration = {
   lastSuccessAt: Date | null;
   lastError: string | null;
   updatedAt: Date;
+  clientId: string | null;
   client: { name: string; isDemo: boolean } | null;
   accounts: { id: string; name: string; externalId: string }[];
 };
@@ -35,12 +38,16 @@ export function IntegrationCard({
   connector,
   configured,
   canManage,
+  canEditAccounts = false,
+  clients = [],
   t,
   locale,
   rel,
   metaLabels,
 }: {
   i: CardIntegration;
+  canEditAccounts?: boolean;
+  clients?: { id: string; name: string }[];
   connector: Connector;
   configured: boolean;
   canManage: boolean;
@@ -136,6 +143,11 @@ export function IntegrationCard({
             ) : (
               <p className="text-xs text-subtle">{t("integrations.noAccounts")}</p>
             )}
+            {canEditAccounts && i.clientId && (
+              <Link href={`/settings/integrations?tab=accounts&acc=${i.clientId}`} className="mt-1 inline-block text-xs text-brand hover:underline">
+                {t("integrations.accounts.manage")}
+              </Link>
+            )}
           </div>
         )}
 
@@ -159,6 +171,16 @@ export function IntegrationCard({
           </p>
         )}
 
+        {canManage && (
+          <EditIntegration
+            id={i.id}
+            label={i.label}
+            clientId={i.clientId}
+            orgWide={connector.capabilities.some((c) => c === "email" || c === "storage" || c === "calendar")}
+            hasAccounts={i.accounts.length > 0}
+            clients={clients}
+          />
+        )}
         {canManage && (
           <IntegrationControls
             id={i.id}

@@ -16,10 +16,11 @@ import { Badge, Callout, Card, CardBody, CardHeader, DataMeta, EmptyState, Grid,
 import { IntegrationCard } from "@/components/integrations/integration-card";
 import { AddIntegrationForm } from "@/components/integrations/add-integration";
 import { TokenUpdate } from "@/components/integrations/token-update";
+import { AccountsManager } from "@/components/integrations/accounts-manager";
 
 export const metadata = { title: "Integrations" };
 
-const TABS = ["integrations", "tokens", "sync"] as const;
+const TABS = ["integrations", "accounts", "tokens", "sync"] as const;
 type Tab = (typeof TABS)[number];
 const OAUTH_ERRORS = ["STATE", "FORBIDDEN", "NOT_FOUND", "UNSUPPORTED", "NOT_CONFIGURED"];
 
@@ -38,6 +39,13 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
     orderBy: [{ client: { name: "asc" } }, { platform: "asc" }, { createdAt: "asc" }],
   });
   const isDemo = integrations.some((i) => i.client?.isDemo);
+  const [accountRows, accountClients] =
+    tab === "accounts"
+      ? await Promise.all([
+          db.adAccount.findMany({ where: { clientId: { in: ctx.clientIds } }, include: { _count: { select: { campaigns: true } } }, orderBy: [{ client: { name: "asc" } }, { platform: "asc" }, { name: "asc" }] }),
+          db.client.findMany({ where: { id: { in: ctx.clientIds } }, select: { id: true, name: true, currency: true, timezone: true, country: true, brands: { select: { id: true, name: true } } }, orderBy: { name: "asc" } }),
+        ])
+      : [[], []];
   const byStatus = integrations.reduce<Record<string, number>>((acc, i) => ((acc[i.status] = (acc[i.status] ?? 0) + 1), acc), {});
 
   const tabs = TABS.map((k) => ({ key: k, label: t(`integrations.tab.${k}`), href: `/settings/integrations${k === "integrations" ? "" : `?tab=${k}`}` }));
@@ -106,12 +114,15 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
                       lastSuccessAt: i.lastSuccessAt,
                       lastError: i.lastError,
                       updatedAt: i.updatedAt,
+                      clientId: i.clientId,
                       client: i.client,
                       accounts: i.accounts,
                     }}
                     connector={connector}
                     configured={isConfigured(connector)}
                     canManage={canManage}
+                    canEditAccounts={ctx.can("clients:edit")}
+                    clients={ctx.clients.map((c) => ({ id: c.id, name: c.name }))}
                     t={t}
                     locale={locale}
                     rel={ctx.rel}
@@ -122,6 +133,40 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
             </div>
           )}
         </>
+      )}
+
+      {tab === "accounts" && (
+        <Card>
+          <CardHeader
+            title={t("integrations.accounts.title")}
+            subtitle={t("integrations.accounts.hint")}
+            meta={<DataMeta source={t("integrations.accounts.source")} updated={ctx.rel(accountRows.reduce<Date | null>((m, a) => (!m || a.createdAt > m ? a.createdAt : m), null))} demo={isDemo} labels={ctx.metaLabels} />}
+          />
+          <CardBody>
+            <AccountsManager
+              key={typeof sp.acc === "string" ? sp.acc : "all"}
+              canEdit={ctx.can("clients:edit")}
+              accounts={accountRows.map((a) => ({
+                id: a.id,
+                clientId: a.clientId,
+                platform: a.platform,
+                name: a.name,
+                externalId: a.externalId,
+                currency: a.currency,
+                timezone: a.timezone,
+                country: a.country,
+                brandId: a.brandId,
+                integrationId: a.integrationId,
+                isOrganic: a.isOrganic,
+                source: a.source,
+                campaigns: a._count.campaigns,
+              }))}
+              clients={accountClients.map((c) => ({ id: c.id, name: c.name, currency: c.currency, timezone: c.timezone, country: c.country, brands: c.brands }))}
+              integrations={integrations.map((i) => ({ id: i.id, label: i.label, clientId: i.clientId, platform: i.platform }))}
+              initialClient={typeof sp.acc === "string" ? sp.acc : ""}
+            />
+          </CardBody>
+        </Card>
       )}
 
       {tab === "tokens" && (

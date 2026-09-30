@@ -11,7 +11,7 @@ databases:
 
 services:
   - type: web
-    name: marketing-intelligence
+    name: marketing-intelligence-demo
     runtime: node
     plan: free
     buildCommand: npm ci --include=dev && npx prisma generate && npm run build
