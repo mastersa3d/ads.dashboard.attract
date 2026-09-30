@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start command for single-instance demo hosting (Render free tier): migrate, seed once,
+# Start command for single-instance hosting (e.g. Render): migrate, first-boot bootstrap,
 # run the background worker in the same container, then serve the app on $PORT.
 set -euo pipefail
 npx prisma migrate deploy

@@ -1,7 +1,8 @@
-# One-click DEMO deployment on Render (https://render.com/docs/blueprint-spec).
-# Creates a PostgreSQL database + one web service, loads the clearly-labelled demo workspace
-# on first boot, and runs the background worker inside the web container.
-# For real clients use the Hostinger guide (docs/deployment-hostinger.md) instead.
+# One-click deployment on Render (https://render.com/docs/blueprint-spec).
+# Creates a PostgreSQL database + one web service and runs the background worker inside it.
+# First boot on an empty database creates your organization and first Super Admin from
+# ORG_NAME / ADMIN_EMAIL / ADMIN_PASSWORD — with NO sample data. Set DEMO_MODE=true instead
+# only if you want the clearly-labelled demo workspace. For production see docs/deployment-hostinger.md.
 databases:
   - name: mimd-db
     plan: free
@@ -10,7 +11,7 @@ databases:
 
 services:
   - type: web
-    name: marketing-intelligence-demo
+    name: marketing-intelligence
     runtime: node
     plan: free
     buildCommand: npm ci --include=dev && npx prisma generate && npm run build
@@ -28,7 +29,13 @@ services:
       - key: CRON_SECRET
         generateValue: true
       - key: DEMO_MODE
-        value: "true"
+        value: "false"
+      - key: ORG_NAME
+        sync: false # e.g. your company name
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false # 10+ chars, letters and digits — change it after first login
       - key: RUN_WORKER_IN_WEB
         value: "true"
       - key: DEFAULT_LOCALE

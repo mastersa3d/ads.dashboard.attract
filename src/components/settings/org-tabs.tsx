@@ -1,4 +1,6 @@
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
+import { db } from "@/lib/db";
+import { demoDataSummary } from "@/lib/demo-purge";
 import type { PageContext } from "@/lib/page";
 import { fmtDate, fmtNumber } from "@/lib/format";
 import { DEFAULT_FX } from "@/lib/fx";
@@ -9,12 +11,31 @@ import { ColorInput } from "@/components/admin/color-input";
 import { ImageField } from "@/components/admin/image-field";
 import { countryOptions, currencyOptions, timezoneOptions } from "@/components/clients/client-fields";
 import { orgSettings } from "./org-settings";
-import { resetOnboarding, updateCompany, updateCurrency, updateGeneral, updateOrgBranding, updateTimezone } from "@/app/actions/settings";
+import { purgeDemo, resetOnboarding, updateCompany, updateCurrency, updateGeneral, updateOrgBranding, updateTimezone } from "@/app/actions/settings";
 
 type Props = { ctx: PageContext; canManage: boolean };
 
 function Meta({ ctx }: { ctx: PageContext }) {
   return <DataMeta source={ctx.t("settings.orgSource")} updated={ctx.rel(ctx.org.updatedAt)} labels={ctx.metaLabels} />;
+}
+
+/** Lets a Super Admin remove every demo record so only real, verified data remains. */
+async function DemoDataCard({ ctx }: { ctx: PageContext }) {
+  const { t } = ctx;
+  const s = await demoDataSummary(db, ctx.user.organizationId);
+  if (!s.any) return null;
+  return (
+    <Card>
+      <CardHeader title={t("settings.demoTitle")} subtitle={t("settings.demoHint")} />
+      <CardBody className="space-y-3">
+        <Callout tone="demo">{t("settings.demoCounts", { clients: s.clients, users: s.users, benchmarks: s.benchmarks })}</Callout>
+        {ctx.user.email.endsWith("@demo.local") && <Callout tone="warning">{t("settings.demoSelfWarning")}</Callout>}
+        <ActionButton action={purgeDemo} variant="danger" size="md" confirm={t("settings.demoConfirm")}>
+          <Trash2 className="size-4" aria-hidden /> {t("settings.demoPurge")}
+        </ActionButton>
+      </CardBody>
+    </Card>
+  );
 }
 
 export function GeneralTab({ ctx, canManage }: Props) {
@@ -48,6 +69,7 @@ export function GeneralTab({ ctx, canManage }: Props) {
           )}
         </CardBody>
       </Card>
+      {canManage && <DemoDataCard ctx={ctx} />}
     </div>
   );
 }

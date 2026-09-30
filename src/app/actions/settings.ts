@@ -1,5 +1,6 @@
 "use server";
 
+import { purgeDemoData } from "@/lib/demo-purge";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -244,5 +245,16 @@ export async function resetOnboarding(): Promise<ActionResult> {
     await audit(user, { action: "onboarding_reset", entity: "Organization", entityId: user.organizationId });
     revalidatePath("/onboarding");
     return { ok: "ui.saved" };
+  });
+}
+
+/** Super Admin: permanently remove all demo data (demo clients, demo users, illustrative benchmarks). */
+export async function purgeDemo(): Promise<ActionResult> {
+  return guarded(async () => {
+    const user = await assertUser("settings:manage");
+    const result = await purgeDemoData(db, { organizationId: user.organizationId, keepUserId: user.id });
+    await audit(user, { action: "purge_demo", entity: "Organization", entityId: user.organizationId, summary: "Demo data removed", diff: result });
+    revalidatePath("/", "layout");
+    return { ok: "settings.demoPurged" };
   });
 }

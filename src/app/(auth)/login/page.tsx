@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { loginAction } from "@/app/actions/auth";
 import { AuthForm } from "@/components/auth/auth-form";
 import { Callout } from "@/components/ui/primitives";
+import { db } from "@/lib/db";
 
 // The login page is the only app page that may be indexed.
 export const metadata: Metadata = { title: "Sign in", robots: { index: true, follow: false } };
@@ -18,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <div>
       <h1 className="text-2xl font-bold">{t("auth.signInTitle")}</h1>
       <p className="mt-1 mb-6 text-sm text-muted">{t("auth.signInSubtitle")}</p>
-      {process.env.DEMO_MODE === "true" && (
+      {process.env.DEMO_MODE === "true" && (await db.user.count({ where: { email: "admin@demo.local" } })) > 0 && (
         <div className="mb-4">
           <Callout tone="demo" title={t("auth.demoTitle")}>
             <p>{t("auth.demoBody")}</p>

@@ -1,6 +1,13 @@
 // "settings" namespace — referenced as t("settings.<key>"). Keep en/ar keys in sync.
 // Also holds the shared admin-form errors (errInvalid, errNotFound) used by every admin action.
 const en: Record<string, string> = {
+  demoTitle: "Demo data",
+  demoHint: "Remove all sample data so the platform only shows real, verified information. This cannot be undone.",
+  demoCounts: "Found {clients} demo client(s), {users} demo user(s) and {benchmarks} illustrative benchmark(s).",
+  demoSelfWarning: "You are signed in with a demo account. It will be kept so you are not locked out — change its e-mail and password afterwards (Users & Permissions / Security).",
+  demoConfirm: "Permanently delete ALL demo clients, their data, demo users and illustrative benchmarks?",
+  demoPurge: "Delete all demo data",
+  demoPurged: "Demo data removed. Only real data remains.",
   title: "Settings",
   subtitle: "Organisation profile, branding, currency, notifications and your account security.",
   readOnly: "You can view these settings. Only a Super Admin can change them.",
@@ -156,6 +163,13 @@ const en: Record<string, string> = {
 };
 
 const ar: Record<string, string> = {
+  demoTitle: "البيانات التجريبية",
+  demoHint: "احذف كل البيانات النموذجية لتعرض المنصة البيانات الحقيقية المؤكدة فقط. لا يمكن التراجع عن هذا الإجراء.",
+  demoCounts: "يوجد {clients} عميل تجريبي و{users} مستخدم تجريبي و{benchmarks} Benchmark توضيحي.",
+  demoSelfWarning: "أنت مسجّل بحساب تجريبي، وسيتم الإبقاء عليه حتى لا تفقد الوصول — غيّر بريده وكلمة مروره بعد الحذف (المستخدمون والصلاحيات / الأمان).",
+  demoConfirm: "هل تريد حذف كل العملاء التجريبيين وبياناتهم والمستخدمين التجريبيين والـ Benchmarks التوضيحية نهائياً؟",
+  demoPurge: "حذف كل البيانات التجريبية",
+  demoPurged: "تم حذف البيانات التجريبية. البيانات الحقيقية فقط هي المتبقية.",
   title: "الإعدادات",
   subtitle: "ملف المؤسسة والهوية والعملة والتنبيهات وأمان حسابك.",
   readOnly: "يمكنك عرض هذه الإعدادات فقط. مدير النظام وحده يمكنه تغييرها.",
