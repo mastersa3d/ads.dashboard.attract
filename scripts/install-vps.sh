@@ -67,7 +67,9 @@ if [[ ! -x /usr/bin/node ]] || [[ "$(/usr/bin/node -p 'process.versions.node.spl
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
   apt-get install -y nodejs
 fi
-[[ -x /usr/bin/pm2 ]] || /usr/bin/npm install -g pm2@latest
+PM2_BIN="$(/usr/bin/npm prefix -g)/bin/pm2"
+[[ -x "$PM2_BIN" ]] || /usr/bin/npm install -g pm2@latest
+[[ -x "$PM2_BIN" ]] || die "pm2 was not installed ($PM2_BIN)"
 
 if ! command -v caddy >/dev/null; then
   say "Installing Caddy (automatic HTTPS)"
@@ -167,8 +169,8 @@ fi
 
 # ── 7. Processes (PM2, start on boot) ────────────────────────────────────────
 say "Starting the app with PM2"
-sudo -u "$APP_USER" bash -c "export PATH=/usr/bin:\$PATH && cd '$APP_DIR' && pm2 startOrReload deploy/ecosystem.config.cjs --update-env && pm2 save"
-env PATH="/usr/bin:$PATH" /usr/bin/pm2 startup systemd -u "$APP_USER" --hp "/home/$APP_USER" >/dev/null
+sudo -u "$APP_USER" bash -c "export PATH=/usr/bin:\$PATH && cd '$APP_DIR' && '$PM2_BIN' startOrReload deploy/ecosystem.config.cjs --update-env && '$PM2_BIN' save"
+env PATH="/usr/bin:$PATH" "$PM2_BIN" startup systemd -u "$APP_USER" --hp "/home/$APP_USER" >/dev/null
 systemctl enable "pm2-$APP_USER" >/dev/null 2>&1 || true
 
 # ── 8. Caddy (HTTPS reverse proxy) ───────────────────────────────────────────
@@ -202,11 +204,11 @@ for _ in $(seq 1 30); do
   if curl -fsS http://127.0.0.1:3000/api/health >/dev/null 2>&1; then OK=1; break; fi
   sleep 2
 done
-[[ "${OK:-0}" == "1" ]] || die "The app did not become healthy. Logs: sudo -u $APP_USER pm2 logs --lines 100"
+[[ "${OK:-0}" == "1" ]] || die "The app did not become healthy. Logs: sudo -u $APP_USER $PM2_BIN logs --lines 100"
 
 echo
 printf '\033[1;32m✔ Installed.\033[0m  Open: %s\n' "$APP_URL"
 [[ -z "${DOMAIN:-}" ]] && echo "  (HTTP only — re-run with a domain later: add DOMAIN=… to $APP_DIR/.env, set APP_URL=https://…, then sudo bash $APP_DIR/scripts/update-vps.sh)"
-echo "  Logs:     sudo -u $APP_USER pm2 logs"
+echo "  Logs:     sudo -u $APP_USER $PM2_BIN logs"
 echo "  Update:   sudo bash $APP_DIR/scripts/update-vps.sh"
 echo "  Secrets:  $APP_DIR/.env (SMTP, AI and platform API keys go here)"

@@ -10,6 +10,7 @@ BRANCH="${BRANCH:-claude/exciting-bohr-a14mwz}"
 
 [[ $EUID -eq 0 ]] || { echo "Run as root: sudo bash $0" >&2; exit 1; }
 [[ -f "$APP_DIR/.env" ]] || { echo "$APP_DIR/.env not found — run install-vps.sh first" >&2; exit 1; }
+PM2_BIN="$(/usr/bin/npm prefix -g)/bin/pm2"
 run() { sudo -u "$APP_USER" bash -c "export PATH=/usr/bin:\$PATH && cd '$APP_DIR' && set -a && source .env && set +a && $*"; }
 
 echo "==> Backup before update"
@@ -24,7 +25,7 @@ run "npm ci --include=dev --no-audit --no-fund && npx prisma migrate deploy && n
 run "rm -rf .next/standalone/.next/static && cp -r .next/static .next/standalone/.next/static && mkdir -p public && cp -r public .next/standalone/"
 
 echo "==> Reloading"
-run "pm2 startOrReload deploy/ecosystem.config.cjs --update-env && pm2 save"
+run "'$PM2_BIN' startOrReload deploy/ecosystem.config.cjs --update-env && '$PM2_BIN' save"
 
 # Keep Caddy in sync with DOMAIN in .env (e.g. after adding a domain later).
 set -a; source "$APP_DIR/.env"; set +a
@@ -35,5 +36,5 @@ fi
 systemctl reload caddy || systemctl restart caddy
 
 for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:3000/api/health >/dev/null 2>&1 && { echo "✔ Updated and healthy: ${APP_URL:-}"; exit 0; }; sleep 2; done
-echo "App not healthy — check: sudo -u $APP_USER pm2 logs --lines 100" >&2
+echo "App not healthy — check: sudo -u $APP_USER $PM2_BIN logs --lines 100" >&2
 exit 1
