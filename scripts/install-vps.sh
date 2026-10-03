@@ -34,19 +34,19 @@ FIRST_INSTALL=1
 [[ -f "$APP_DIR/.env" ]] && FIRST_INSTALL=0
 
 PUBLIC_IP="$(curl -fsS4 --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')"
-if [[ -z "${DOMAIN:-}" && $FIRST_INSTALL -eq 1 ]]; then
+if [[ -z "${DOMAIN+set}" && $FIRST_INSTALL -eq 1 ]]; then
   echo
   echo "Domain for the platform (e.g. app.yourcompany.com)."
   echo "Point its DNS A record to this server ($PUBLIC_IP) first, so HTTPS can be issued."
-  read -rp "Domain (leave empty to use http://$PUBLIC_IP for now): " DOMAIN || true
+  read -rp "Domain (leave empty to use http://$PUBLIC_IP for now): " DOMAIN < /dev/tty || DOMAIN=""
 fi
 if [[ $FIRST_INSTALL -eq 1 ]]; then
-  [[ -n "${ORG_NAME:-}" ]] || read -rp "Company / agency name: " ORG_NAME
-  [[ -n "${ADMIN_EMAIL:-}" ]] || read -rp "Super Admin e-mail: " ADMIN_EMAIL
+  [[ -n "${ORG_NAME:-}" ]] || read -rp "Company / agency name: " ORG_NAME < /dev/tty
+  [[ -n "${ADMIN_EMAIL:-}" ]] || read -rp "Super Admin e-mail: " ADMIN_EMAIL < /dev/tty
   if [[ -z "${ADMIN_PASSWORD:-}" ]]; then
     while true; do
-      read -rsp "Super Admin password (10+ chars, letters and digits): " ADMIN_PASSWORD; echo
-      read -rsp "Repeat password: " P2; echo
+      read -rsp "Super Admin password (10+ chars, letters and digits): " ADMIN_PASSWORD < /dev/tty; echo
+      read -rsp "Repeat password: " P2 < /dev/tty; echo
       [[ "$ADMIN_PASSWORD" == "$P2" ]] || { echo "Passwords don't match."; continue; }
       [[ ${#ADMIN_PASSWORD} -ge 10 && "$ADMIN_PASSWORD" =~ [A-Za-z] && "$ADMIN_PASSWORD" =~ [0-9] ]] && break
       echo "Too weak — use 10+ characters with letters and digits."
