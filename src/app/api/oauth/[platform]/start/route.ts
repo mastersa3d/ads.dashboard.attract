@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ plat
   const res = NextResponse.redirect(target);
   res.cookies.set(OAUTH_COOKIE, signed, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.APP_URL ? process.env.APP_URL.startsWith("https://") : process.env.NODE_ENV === "production",
     sameSite: "lax", // must survive the top-level redirect back from the provider
     path: "/api/oauth",
     maxAge: OAUTH_TTL_MS / 1000,
