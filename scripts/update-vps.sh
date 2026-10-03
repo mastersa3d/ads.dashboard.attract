@@ -10,7 +10,7 @@ BRANCH="${BRANCH:-claude/exciting-bohr-a14mwz}"
 
 [[ $EUID -eq 0 ]] || { echo "Run as root: sudo bash $0" >&2; exit 1; }
 [[ -f "$APP_DIR/.env" ]] || { echo "$APP_DIR/.env not found — run install-vps.sh first" >&2; exit 1; }
-run() { sudo -u "$APP_USER" bash -c "cd '$APP_DIR' && set -a && source .env && set +a && $*"; }
+run() { sudo -u "$APP_USER" bash -c "export PATH=/usr/bin:\$PATH && cd '$APP_DIR' && set -a && source .env && set +a && $*"; }
 
 echo "==> Backup before update"
 run "bash scripts/backup.sh" || { [[ "${FORCE:-0}" == "1" ]] || { echo "Backup failed — set FORCE=1 to continue anyway" >&2; exit 1; }; }

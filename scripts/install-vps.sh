@@ -61,12 +61,13 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y curl git ca-certificates gnupg openssl postgresql postgresql-contrib debian-keyring debian-archive-keyring apt-transport-https
 
-if ! command -v node >/dev/null || [[ "$(node -p 'process.versions.node.split(".")[0]')" -lt 22 ]]; then
+# The app runs as a system user with the default PATH, so check the system Node in /usr/bin.
+if [[ ! -x /usr/bin/node ]] || [[ "$(/usr/bin/node -p 'process.versions.node.split(".")[0]')" -lt 22 ]]; then
   say "Installing Node.js 22"
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
   apt-get install -y nodejs
 fi
-command -v pm2 >/dev/null || npm install -g pm2@latest
+[[ -x /usr/bin/pm2 ]] || /usr/bin/npm install -g pm2@latest
 
 if ! command -v caddy >/dev/null; then
   say "Installing Caddy (automatic HTTPS)"
@@ -153,21 +154,21 @@ say "Installing dependencies and building (takes a few minutes)"
 if [[ "$(free -m | awk '/Mem:/{print $2}')" -lt 3000 && ! -f /swapfile ]]; then
   fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
-sudo -u "$APP_USER" bash -c "cd '$APP_DIR' && set -a && source .env && set +a && npm ci --include=dev --no-audit --no-fund && npx prisma migrate deploy && npm run build"
-sudo -u "$APP_USER" bash -c "cd '$APP_DIR' && rm -rf .next/standalone/.next/static && cp -r .next/static .next/standalone/.next/static && mkdir -p public && cp -r public .next/standalone/"
+sudo -u "$APP_USER" bash -c "export PATH=/usr/bin:\$PATH && cd '$APP_DIR' && set -a && source .env && set +a && npm ci --include=dev --no-audit --no-fund && npx prisma migrate deploy && npm run build"
+sudo -u "$APP_USER" bash -c "export PATH=/usr/bin:\$PATH && cd '$APP_DIR' && rm -rf .next/standalone/.next/static && cp -r .next/static .next/standalone/.next/static && mkdir -p public && cp -r public .next/standalone/"
 
 # ── 6. First Super Admin (first install only, no demo data) ─────────────────
 if [[ $FIRST_INSTALL -eq 1 ]]; then
   say "Creating organization and Super Admin"
   sudo -u "$APP_USER" env ORG_NAME="$ORG_NAME" ADMIN_EMAIL="$ADMIN_EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" \
-    bash -c "cd '$APP_DIR' && set -a && source .env && set +a && npx tsx scripts/seed-if-empty.ts"
+    bash -c "export PATH=/usr/bin:\$PATH && cd '$APP_DIR' && set -a && source .env && set +a && npx tsx scripts/seed-if-empty.ts"
   unset ADMIN_PASSWORD P2
 fi
 
 # ── 7. Processes (PM2, start on boot) ────────────────────────────────────────
 say "Starting the app with PM2"
-sudo -u "$APP_USER" bash -c "cd '$APP_DIR' && pm2 startOrReload deploy/ecosystem.config.cjs --update-env && pm2 save"
-env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$APP_USER" --hp "/home/$APP_USER" >/dev/null
+sudo -u "$APP_USER" bash -c "export PATH=/usr/bin:\$PATH && cd '$APP_DIR' && pm2 startOrReload deploy/ecosystem.config.cjs --update-env && pm2 save"
+env PATH="/usr/bin:$PATH" /usr/bin/pm2 startup systemd -u "$APP_USER" --hp "/home/$APP_USER" >/dev/null
 systemctl enable "pm2-$APP_USER" >/dev/null 2>&1 || true
 
 # ── 8. Caddy (HTTPS reverse proxy) ───────────────────────────────────────────
