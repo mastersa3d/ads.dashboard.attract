@@ -79,8 +79,17 @@ services:
   migrate:
     build: { context: ., target: worker }
     image: mimd-worker:${IMAGE_TAG:-latest}
-    command: ["npx", "prisma", "migrate", "deploy"]
-    environment: *app-env
+    # Migrate, then (first boot only) create the organization + Super Admin — no demo data.
+    command: ["sh", "-c", "npx prisma migrate deploy && node node_modules/tsx/dist/cli.mjs scripts/seed-if-empty.ts"]
+    init: true
+    environment:
+      <<: *app-env
+      ORG_NAME: ${ORG_NAME:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-}
+      ORG_CURRENCY: ${ORG_CURRENCY:-EGP}
+      ORG_TIMEZONE: ${ORG_TIMEZONE:-Africa/Cairo}
     depends_on:
       db: { condition: service_healthy }
     restart: "no"
@@ -90,6 +99,7 @@ services:
     build: { context: ., target: app }
     image: mimd-app:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    init: true
     environment: *app-env
     volumes:
       - uploads:/app/uploads
@@ -102,6 +112,8 @@ services:
   worker:
     image: mimd-worker:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    init: true
+    command: ["node", "node_modules/tsx/dist/cli.mjs", "worker/index.ts"]
     stop_grace_period: 70s # worker finishes its batch on SIGTERM (forced exit after 60 s)
     environment: *app-env
     volumes:
@@ -133,7 +145,7 @@ services:
   seed:
     image: mimd-worker:${IMAGE_TAG:-latest}
     profiles: ["demo"]
-    command: ["npx", "tsx", "prisma/seed.ts"]
+    command: ["node", "node_modules/tsx/dist/cli.mjs", "prisma/seed.ts"]
     environment: *app-env
     depends_on:
       migrate: { condition: service_completed_successfully }

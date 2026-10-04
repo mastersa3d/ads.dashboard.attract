@@ -13,8 +13,9 @@ ARG NODE_VERSION=22
 
 # ── base ─────────────────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION}-alpine AS base
-# openssl: Prisma query engine; libc6-compat: some native deps on musl; tini: PID 1 signal handling
-RUN apk add --no-cache libc6-compat openssl tini
+# No extra OS packages: Alpine already ships libssl3/libcrypto3 (used by the Prisma engine) and
+# busybox wget (health check). Signal handling for PID 1 comes from `init: true` in compose
+# (or `docker run --init`), so the image builds even where package mirrors are unreachable.
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -56,7 +57,6 @@ EXPOSE 3000
 VOLUME ["/app/uploads"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT}/api/health" >/dev/null || exit 1
-ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "server.js"]
 
 # ── worker: background jobs, migrations, seed ────────────────────────────────
@@ -73,5 +73,4 @@ COPY --chown=nextjs:nodejs src ./src
 COPY --chown=nextjs:nodejs worker ./worker
 COPY --chown=nextjs:nodejs scripts ./scripts
 USER nextjs
-ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["npx", "tsx", "worker/index.ts"]
+CMD ["node", "node_modules/tsx/dist/cli.mjs", "worker/index.ts"]
