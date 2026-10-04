@@ -100,7 +100,11 @@ services:
     image: mimd-app:${IMAGE_TAG:-latest}
     restart: unless-stopped
     init: true
-    environment: *app-env
+    environment:
+      <<: *app-env
+      # Docker sets HOSTNAME to the container id; Next.js must listen on all interfaces so both
+      # Caddy (app:3000) and the health check (127.0.0.1:3000) can reach it.
+      HOSTNAME: 0.0.0.0
     volumes:
       - uploads:/app/uploads
     depends_on:

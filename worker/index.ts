@@ -16,9 +16,15 @@ import { runBatch } from "@/lib/jobs/handlers";
  * every few minutes instead.
  */
 
-const POLL_MS = Number(process.env.WORKER_POLL_MS ?? 5_000);
+/** Env vars may be set but empty (e.g. docker-compose `${VAR:-}`) — fall back instead of using 0. */
+function positiveInt(raw: string | undefined, fallback: number) {
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+const POLL_MS = positiveInt(process.env.WORKER_POLL_MS, 5_000);
 const SCHEDULE_MS = 60_000;
-const BATCH = Number(process.env.WORKER_BATCH ?? 5);
+const BATCH = positiveInt(process.env.WORKER_BATCH, 5);
 
 let stopping = false;
 let wake: (() => void) | null = null;

@@ -118,7 +118,7 @@ export const email: Connector = {
   limitations: ["Configured with server environment variables (SMTP_*); used for alerts, invitations and scheduled reports."],
   async testConnection() {
     if (!hasEnv("SMTP_HOST")) throw new ConnectorError("NOT_CONFIGURED", "SMTP_HOST is not configured — e-mails are only logged");
-    const port = Number(process.env.SMTP_PORT ?? 465);
+    const port = (Number(process.env.SMTP_PORT) || 465);
     const transport = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port,

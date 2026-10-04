@@ -131,7 +131,7 @@ docker compose --env-file "$ENV_FILE" up -d --build --remove-orphans
 say "Waiting for the app to become healthy"
 OK=0
 for _ in $(seq 1 90); do
-  if docker compose --env-file "$ENV_FILE" exec -T app wget -qO- http://127.0.0.1:3000/api/health >/dev/null 2>&1; then OK=1; break; fi
+  if docker compose --env-file "$ENV_FILE" exec -T app wget -Y off -qO- http://127.0.0.1:3000/api/health >/dev/null 2>&1; then OK=1; break; fi
   sleep 3
 done
 if [[ $OK -ne 1 ]]; then

@@ -9,6 +9,21 @@
 >
 > نفصل بين بيئة **الاختبار (Staging)** التي يمكن تعبئتها ببيانات تجريبية، وبيئة **الإنتاج** التي لا تُشغَّل فيها البيانات التجريبية أبدًا. الترحيلات تُطبّق بالأمر `prisma migrate deploy`، والنشر يتم عبر `scripts/deploy.sh` مع نسخة احتياطية قبل كل نشر وفحص صحة بعده. السجلات بصيغة JSON مع تدوير تلقائي، وSentry اختياري.
 
+## Quick start — one command
+
+**Docker (recommended on a Hostinger VPS):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mastersa3d/ads.dashboard.attract/claude/exciting-bohr-a14mwz/scripts/install-docker-vps.sh -o install-docker.sh
+sudo bash install-docker.sh
+```
+
+Installs Docker if needed, generates `/opt/mimd-docker/.env.production` with random secrets, builds and
+starts PostgreSQL + app + worker + Caddy (automatic HTTPS), creates your organization and first
+Super Admin (no demo data), and schedules a daily backup. Re-run the same command to update.
+
+**Without Docker (Node + PM2):** `scripts/install-vps.sh` (same questions, installs into `/opt/mimd`).
+
 ## 0. Choosing a target
 
 | | (a) VPS + Docker Compose | (b) VPS + PM2 (no Docker) | (c) Shared / Cloud "Node.js app" |
